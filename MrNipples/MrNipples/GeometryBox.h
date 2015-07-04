@@ -14,9 +14,12 @@ class GeometryBox
 {
 	private:
 		Vertex32 mVertices[8];
+		bool	 mIsVisible;
 	public:
 		GeometryBox();
 		GeometryBox( XMFLOAT3 origin, float width, float height, float depth, float R, float G, float B );
 		~GeometryBox();
+		void IsVisible( bool isVisible );
+		bool IsVisible() const;
 };
 #endif

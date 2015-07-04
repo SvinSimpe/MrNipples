@@ -2,6 +2,7 @@
 #define _APPLICATION_H_
 
 #include "3Dlibs.h"
+#include "Game.h"
 
 class Application
 {
@@ -9,26 +10,33 @@ class Application
 		//--------
 		// Window
 		//--------
-		HINSTANCE	m_hInstance;
-		HWND		m_hWnd;
-		int			m_windowHeight;
-		int			m_windowWidht;
+		HINSTANCE	mHInstance;
+		HWND		mHWnd;
+		int			mWindowHeight;
+		int			mWindowWidht;
 
 		//---------
 		// DirectX
 		//---------
-		ID3D11Device*			m_device;
-		ID3D11DeviceContext*	m_deviceContext;
-		IDXGISwapChain*			m_swapChain;
-		ID3D11RenderTargetView*	m_renderTargetView;
-		ID3D11Texture2D*		m_depthStencil;
-		ID3D11DepthStencilView*	m_depthStencilView;
+		ID3D11Device*			mDevice;
+		ID3D11DeviceContext*	mDeviceContext;
+		IDXGISwapChain*			mSwapChain;
+		ID3D11RenderTargetView*	mRenderTargetView;
+		ID3D11Texture2D*		mDepthStencil;
+		ID3D11DepthStencilView*	mDepthStencilView;
 
-		bool	m_changeRasterizerState;
+		bool	mChangeRasterizerState;
 		
 		// Input
-		UINT	m_prevKeyboardState;
-		UINT	m_currKeyboardState;
+		UINT	mPrevKeyboardState;
+		UINT	mCurrKeyboardState;
+
+		// Game component
+		Game *mGame;
+
+
+	private:
+		void Render( float deltaTime );
 
 	protected:
 		void PrintFPSinWindowHeader();

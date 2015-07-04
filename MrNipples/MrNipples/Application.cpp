@@ -2,6 +2,24 @@
 #include <sstream>
 #include <string>
 
+void Application::Render( float deltaTime )
+{
+	// Clear Back Buffer
+	static float clearColor[4] = { 0.4f, 0.35f, 0.15f, 1.0f };
+
+	mDeviceContext->ClearRenderTargetView( mRenderTargetView, clearColor );
+
+	// Clear Depth Buffer
+	mDeviceContext->ClearDepthStencilView( mDepthStencilView, D3D11_CLEAR_DEPTH, 1.0f, 0 );
+
+	
+
+	mDeviceContext->OMSetRenderTargets( 1, &mRenderTargetView, mDepthStencilView );
+
+	// Swap Front and Back Buffer
+	mSwapChain->Present( 0, 0 );
+}
+
 void Application::PrintFPSinWindowHeader()
 {
 	//long time = time * 0.9 + last_frame * 0.1
@@ -22,7 +40,7 @@ void Application::PrintFPSinWindowHeader()
 void Application::SetViewPort()
 {
 	RECT rc;
-	GetClientRect( m_hWnd, &rc );
+	GetClientRect( mHWnd, &rc );
 
 	int width	= rc.right - rc.left;
 	int height	= rc.bottom - rc.top;
@@ -37,14 +55,14 @@ void Application::SetViewPort()
 	vp.MaxDepth	= 1.0f;
 	vp.TopLeftX	= 0;
 	vp.TopLeftY	= 0;
-	m_deviceContext->RSSetViewports( 1, &vp );
+	mDeviceContext->RSSetViewports( 1, &vp );
 
-	m_deviceContext->OMSetRenderTargets( 1, &m_renderTargetView, m_depthStencilView );
+	mDeviceContext->OMSetRenderTargets( 1, &mRenderTargetView, mDepthStencilView );
 }
 
 void Application::HandleInput( UINT msg, WPARAM wParam, LPARAM lParam, float deltaTime )
 {
-	m_currKeyboardState = msg;
+	mCurrKeyboardState = msg;
 
 	switch ( msg )
 	{
@@ -79,27 +97,34 @@ void Application::HandleInput( UINT msg, WPARAM wParam, LPARAM lParam, float del
 			    case VK_CONTROL: 
                     
                     // Process the Control  key. 
-					if( m_prevKeyboardState == WM_KEYUP )
-						m_changeRasterizerState = true; 
+					if( mPrevKeyboardState == WM_KEYUP )
+					{
+						if( mChangeRasterizerState )
+							mChangeRasterizerState = false; 
+						else
+							mChangeRasterizerState = true; 
+
+						mGame->SetRasterizerStateWired( mChangeRasterizerState );
+					}	
                     break;
 
 			     case VK_DELETE: 
                     
                     // Process the DEL key.
 					BOOL isFullscreen = false;
-					m_swapChain->GetFullscreenState( &isFullscreen, nullptr );
+					mSwapChain->GetFullscreenState( &isFullscreen, nullptr );
 					
 					if( isFullscreen )
-						m_swapChain->SetFullscreenState( false, nullptr );
+						mSwapChain->SetFullscreenState( false, nullptr );
 					else
-						m_swapChain->SetFullscreenState( true, nullptr );
+						mSwapChain->SetFullscreenState( true, nullptr );
 
 
                     break; 
 			}
 	}
 
-	m_prevKeyboardState = m_currKeyboardState;
+	mPrevKeyboardState = mCurrKeyboardState;
 }
 
 Application* g_app = 0;
@@ -142,21 +167,23 @@ LRESULT CALLBACK Application::WndProc( HWND hWnd, UINT msg, WPARAM wParam, LPARA
 
 Application::Application()
 {
-	m_hInstance		= NULL;
-	m_hWnd			= NULL;
-	m_windowHeight	= 720;
-	m_windowWidht	= 1280;
+	mHInstance		= NULL;
+	mHWnd			= NULL;
+	mWindowHeight	= 720;
+	mWindowWidht	= 1280;
 
-	m_device			= nullptr;
-	m_deviceContext		= nullptr;
-	m_swapChain			= nullptr;
-	m_renderTargetView	= nullptr;
-	m_depthStencil		= nullptr;
-	m_depthStencilView	= nullptr;
+	mDevice				= nullptr;
+	mDeviceContext		= nullptr;
+	mSwapChain			= nullptr;
+	mRenderTargetView	= nullptr;
+	mDepthStencil		= nullptr;
+	mDepthStencilView	= nullptr;
 
-	m_changeRasterizerState = false;
-	m_prevKeyboardState		= 0;
-	m_currKeyboardState		= 0;
+	mChangeRasterizerState	= false;
+	mPrevKeyboardState		= 0;
+	mCurrKeyboardState		= 0;
+
+	mGame					= nullptr;
 }
 
 Application::~Application()
@@ -168,7 +195,7 @@ HRESULT Application::InitializeWindow( HINSTANCE hInstance, int nCmdShow )
 {
 	HRESULT hr = S_OK;
 
-	m_hInstance = hInstance;
+	mHInstance = hInstance;
 
 	//----------------------
 	// Register Window Class
@@ -179,7 +206,7 @@ HRESULT Application::InitializeWindow( HINSTANCE hInstance, int nCmdShow )
 	wc.lpfnWndProc		= MainWndProc;
 	wc.cbClsExtra		= 0;
 	wc.cbWndExtra		= 0;
-	wc.hInstance		= m_hInstance;
+	wc.hInstance		= mHInstance;
 	wc.hIcon			= 0;
 	wc.hCursor			= LoadCursor( NULL, IDC_HAND );
 	wc.hbrBackground	= (HBRUSH)( COLOR_WINDOW + 1 );
@@ -193,10 +220,10 @@ HRESULT Application::InitializeWindow( HINSTANCE hInstance, int nCmdShow )
 	//-----------------------
 	// Adjust & Create Window
 	//-----------------------
-	RECT rc = { 0, 0, m_windowWidht, m_windowHeight };
+	RECT rc = { 0, 0, mWindowWidht, mWindowHeight };
 	AdjustWindowRect( &rc, WS_OVERLAPPEDWINDOW, FALSE );
 
-	if( !( m_hWnd = CreateWindow(	"Mr Nipples      (^<^)",
+	if( !( mHWnd = CreateWindow(	"Mr Nipples      (^<^)",
 									"Mr Nipples      (^<^)",
 									WS_OVERLAPPEDWINDOW,
 									CW_USEDEFAULT,
@@ -205,13 +232,13 @@ HRESULT Application::InitializeWindow( HINSTANCE hInstance, int nCmdShow )
 									rc.bottom - rc.top,
 									NULL,
 									NULL,
-									m_hInstance,
+									mHInstance,
 									NULL ) ) )
 	{
 		return E_FAIL;
 	}
 
-	ShowWindow( m_hWnd, nCmdShow );
+	ShowWindow( mHWnd, nCmdShow );
 	ShowCursor( TRUE );
 
 
@@ -223,7 +250,7 @@ HRESULT Application::InitializeDirectX11()
 	HRESULT hr = E_FAIL;
 
 	RECT rc;
-	GetClientRect( m_hWnd, &rc );
+	GetClientRect( mHWnd, &rc );
 
 	int width	= rc.right - rc.left;
 	int height	= rc.bottom - rc.top;
@@ -246,7 +273,7 @@ HRESULT Application::InitializeDirectX11()
 	sd.BufferDesc.RefreshRate.Numerator		= 60;
 	sd.BufferDesc.RefreshRate.Denominator	= 1;
 	sd.BufferUsage							= DXGI_USAGE_RENDER_TARGET_OUTPUT;
-	sd.OutputWindow							= m_hWnd;
+	sd.OutputWindow							= mHWnd;
 	sd.SampleDesc.Count						= 1;
 	sd.Windowed								= TRUE;
 	sd.Flags								= DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
@@ -264,10 +291,10 @@ HRESULT Application::InitializeDirectX11()
 											ARRAYSIZE( featureLevelsToTry ),
 											D3D11_SDK_VERSION,
 											&sd,
-											&m_swapChain,
-											&m_device,
+											&mSwapChain,
+											&mDevice,
 											&initiatedFeatureLevel,
-											&m_deviceContext );
+											&mDeviceContext );
 	}
 
 	if( FAILED( hr ) )
@@ -278,9 +305,9 @@ HRESULT Application::InitializeDirectX11()
 	// Create Render Target View
 	//--------------------------
 	ID3D11Texture2D* pBackBuffer;
-	if ( SUCCEEDED( hr = m_swapChain->GetBuffer( 0, __uuidof( ID3D11Texture2D ), (void**)&pBackBuffer ) ) )
+	if ( SUCCEEDED( hr = mSwapChain->GetBuffer( 0, __uuidof( ID3D11Texture2D ), (void**)&pBackBuffer ) ) )
 	{
-		hr = m_device->CreateRenderTargetView( pBackBuffer, nullptr, &m_renderTargetView );
+		hr = mDevice->CreateRenderTargetView( pBackBuffer, nullptr, &mRenderTargetView );
 		SAFE_RELEASE( pBackBuffer );
 	}
 	
@@ -304,7 +331,7 @@ HRESULT Application::InitializeDirectX11()
 	dsd.CPUAccessFlags		= 0;
 	dsd.MiscFlags			= 0;
 
-	if( FAILED( hr = m_device->CreateTexture2D( &dsd, nullptr, &m_depthStencil ) ) )
+	if( FAILED( hr = mDevice->CreateTexture2D( &dsd, nullptr, &mDepthStencil ) ) )
 		return hr;
 
 	D3D11_DEPTH_STENCIL_VIEW_DESC dsvd;
@@ -313,10 +340,14 @@ HRESULT Application::InitializeDirectX11()
 	dsvd.ViewDimension		= D3D11_DSV_DIMENSION_TEXTURE2D;
 	dsvd.Texture2D.MipSlice	= 0;
 
-	if( FAILED( hr = m_device->CreateDepthStencilView( m_depthStencil, &dsvd, &m_depthStencilView ) ) )
+	if( FAILED( hr = mDevice->CreateDepthStencilView( mDepthStencil, &dsvd, &mDepthStencilView ) ) )
 		return hr;
 
 	SetViewPort();
+
+	// Game component
+	mGame = new Game();
+	hr = mGame->Initialize( mDevice, mDeviceContext );
 
 	return hr;
 }
@@ -346,7 +377,10 @@ int Application::Run()
 			QueryPerformanceCounter((LARGE_INTEGER*)&currTimeStamp);
 			float deltaTime = (currTimeStamp - prevTimeStamp) * secsPerCnt;
 
+
 			HandleInput( msg.message, msg.wParam, msg.lParam, deltaTime );
+			mGame->Update( deltaTime );
+			Render( deltaTime );
 
 			///TEST
 			//if( m_changeRasterizerState )
@@ -369,10 +403,12 @@ int Application::Run()
 
 void Application::Release()
 {
-	SAFE_RELEASE( m_device );
-	SAFE_RELEASE( m_deviceContext );
-	SAFE_RELEASE( m_swapChain );
-	SAFE_RELEASE( m_renderTargetView );
-	SAFE_RELEASE( m_depthStencil );
-	SAFE_RELEASE( m_depthStencilView );
+	mGame->Release();
+
+	SAFE_RELEASE( mDevice );
+	SAFE_RELEASE( mDeviceContext );
+	SAFE_RELEASE( mSwapChain );
+	SAFE_RELEASE( mRenderTargetView );
+	SAFE_RELEASE( mDepthStencil );
+	SAFE_RELEASE( mDepthStencilView );
 }

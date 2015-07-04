@@ -2,6 +2,7 @@
 #define _GAME_H_
 
 #include "3DLibs.h"
+#include "Level.h"
 
 class Game
 {
@@ -16,6 +17,8 @@ class Game
 		ID3D11PixelShader*			mPixelShader;
 
 	public:
+		void	SetRasterizerStateWired( bool isWired );
+
 		void	Update( float deltaTime );
 		void	Render( float deltaTime );
 		HRESULT Initialize( ID3D11Device* device, ID3D11DeviceContext* deviceContext );
