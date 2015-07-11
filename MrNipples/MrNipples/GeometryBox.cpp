@@ -14,7 +14,7 @@ GeometryBox::GeometryBox( XMFLOAT3 origin, float width, float height, float dept
 	mIsVisible	= true;
 	mVertexFaces = new Vertex32[36];
 	XMStoreFloat4x4( &mPerObjectData.world,  XMMatrixIdentity() );
-	mPerObjectData.color = XMFLOAT3( 1.0f, 1.0f, 1.0f );
+	mPerObjectData.color = XMFLOAT3( 0.18f, 0.36f, 0.54f );
 
 	/*
 		       0-------1
