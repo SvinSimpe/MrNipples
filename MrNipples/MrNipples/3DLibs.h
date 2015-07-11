@@ -18,4 +18,21 @@
 
 using namespace DirectX;
 ///---------------------------------------------------
+
+struct PerObjectData
+{
+	XMFLOAT4X4  world;
+	XMFLOAT3	color;
+	float		padding;
+};
+
+struct PerFrameData
+{
+	XMFLOAT4X4  view;
+	XMFLOAT4X4  projection;
+	XMFLOAT3	eyePosition;
+	float		padding;
+};
+
+///---------------------------------------------------
 #endif

@@ -1,19 +1,36 @@
 #include "Level.h"
 
+
+void Level::AddBox( XMFLOAT3 origin, float width, float height, float depth, float R, float G, float B )
+{
+	GeometryBox *box = new GeometryBox( origin, width, height, depth );
+
+	/*
+		- Store color in PerObjectData[ID]
+		-
+
+		
+
+		XMFLOAT3( R, G, B );
+
+	*/
+	
+}
+
 void Level::AddGeometry( GeometryBox newBox )
 {
-	mLevelGeometry.push_back( newBox );
+	mLevelGeometry.push_back( &newBox );
 }
 
 void Level::SetObjectToRender( int ID, bool renderObject )
 {
 	// Set object as visible
-	if( renderObject && !mLevelGeometry[ID].IsVisible() )
-		mLevelGeometry[ID].IsVisible( true );
+	if( renderObject && !mLevelGeometry[ID]->IsVisible() )
+		mLevelGeometry[ID]->IsVisible( true );
 
 	// Set object as NOT visible
-	else if( !renderObject && mLevelGeometry[ID].IsVisible() )
-		mLevelGeometry[ID].IsVisible( false );
+	else if( !renderObject && mLevelGeometry[ID]->IsVisible() )
+		mLevelGeometry[ID]->IsVisible( false );
 }
 
 void Level::CheckCollision()

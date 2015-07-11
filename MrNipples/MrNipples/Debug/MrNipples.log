@@ -1,23 +1,19 @@
-﻿Build started 2015-07-05 01:17:11.
-     1>Project "D:\BTH\Scripting & Andra språk\MrNipples\MrNipples\MrNipples\MrNipples.vcxproj" on node 2 (Build target(s)).
+﻿Build started 2015-07-11 15:03:12.
+     1>Project "C:\Simon\Scripting & andra språk\MrNipples\MrNipples\MrNipples\MrNipples.vcxproj" on node 2 (Build target(s)).
+       Project file contains ToolsVersion="12.0". This toolset may be unknown or missing, in which case you may be able to resolve this by installing the appropriate version of MSBuild, or the build may have been forced to a particular ToolsVersion for policy reasons. Treating the project as if it had ToolsVersion="4.0". For more information, please see http://go.microsoft.com/fwlink/?LinkId=291333.
      1>ClCompile:
-         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\CL.exe /c /ZI /nologo /W3 /WX- /sdl /Od /Oy- /D _MBCS /Gm /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Fo"Debug\\" /Fd"Debug\vc120.pdb" /Gd /TP /analyze- /errorReport:prompt Application.cpp Game.cpp Level.cpp main.cpp
-         Level.cpp
-         Generating Code...
-         Skipping... (no relevant changes detected)
-         main.cpp
+         C:\Program Files (x86)\Microsoft Visual Studio 11.0\VC\bin\CL.exe /c /ZI /nologo /W3 /WX- /sdl /Od /Oy- /D _MBCS /Gm /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Fo"Debug\\" /Fd"Debug\vc110.pdb" /Gd /TP /analyze- /errorReport:prompt Game.cpp
          Game.cpp
-         Application.cpp
        Link:
-         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:"D:\BTH\Scripting & Andra språk\MrNipples\MrNipples\Debug\MrNipples.exe" /INCREMENTAL /NOLOGO kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"D:\BTH\Scripting & Andra språk\MrNipples\MrNipples\Debug\MrNipples.pdb" /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"D:\BTH\Scripting & Andra språk\MrNipples\MrNipples\Debug\MrNipples.lib" /MACHINE:X86 Debug\Application.obj
+         C:\Program Files (x86)\Microsoft Visual Studio 11.0\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:"C:\Simon\Scripting & andra språk\MrNipples\MrNipples\Debug\MrNipples.exe" /INCREMENTAL /NOLOGO kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"C:\Simon\Scripting & andra språk\MrNipples\MrNipples\Debug\MrNipples.pdb" /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"C:\Simon\Scripting & andra språk\MrNipples\MrNipples\Debug\MrNipples.lib" /MACHINE:X86 Debug\Application.obj
          Debug\Camera.obj
          Debug\Game.obj
          Debug\GeometryBox.obj
          Debug\Level.obj
          Debug\main.obj
-         MrNipples.vcxproj -> D:\BTH\Scripting & Andra språk\MrNipples\MrNipples\Debug\MrNipples.exe
-     1>Done Building Project "D:\BTH\Scripting & Andra språk\MrNipples\MrNipples\MrNipples\MrNipples.vcxproj" (Build target(s)).
+         MrNipples.vcxproj -> C:\Simon\Scripting & andra språk\MrNipples\MrNipples\Debug\MrNipples.exe
+     1>Done Building Project "C:\Simon\Scripting & andra språk\MrNipples\MrNipples\MrNipples\MrNipples.vcxproj" (Build target(s)).
 
 Build succeeded.
 
-Time Elapsed 00:00:02.80
+Time Elapsed 00:00:10.23

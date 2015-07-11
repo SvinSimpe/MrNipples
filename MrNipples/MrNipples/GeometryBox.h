@@ -7,17 +7,23 @@ struct Vertex32
 {
 	XMFLOAT3 position;
 	XMFLOAT3 normal;
-	XMFLOAT2 texCoord;
 };
 
 class GeometryBox
 {
+	
+
 	private:
-		Vertex32 mVertices[8];
 		bool	 mIsVisible;
+
+	public: 
+		static unsigned int sID;
+		unsigned int		mID;
+		Vertex32			mVertexFaces[36];
+
 	public:
 		GeometryBox();
-		GeometryBox( XMFLOAT3 origin, float width, float height, float depth, float R, float G, float B );
+		GeometryBox( XMFLOAT3 origin, float width, float height, float depth );
 		~GeometryBox();
 		void IsVisible( bool isVisible );
 		bool IsVisible() const;

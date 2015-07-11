@@ -12,9 +12,10 @@ void Application::Render( float deltaTime )
 	// Clear Depth Buffer
 	mDeviceContext->ClearDepthStencilView( mDepthStencilView, D3D11_CLEAR_DEPTH, 1.0f, 0 );
 
-	
-
+	// Set Render target
 	mDeviceContext->OMSetRenderTargets( 1, &mRenderTargetView, mDepthStencilView );
+
+	//Draw Game here
 
 	// Swap Front and Back Buffer
 	mSwapChain->Present( 0, 0 );

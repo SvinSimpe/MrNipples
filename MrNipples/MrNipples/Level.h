@@ -9,9 +9,10 @@ class Level
 	private:
 		ID3D11Device*				mDevice;
 		ID3D11DeviceContext*		mDeviceContext;
-		std::vector<GeometryBox>	mLevelGeometry;
+		std::vector<GeometryBox*>	mLevelGeometry;
 
 	public:
+		void	AddBox( XMFLOAT3 origin, float width, float height, float depth, float R, float G, float B );
 		void	AddGeometry( GeometryBox newBox );
 		void	SetObjectToRender( int index, bool renderObject );
 		void	CheckCollision();

@@ -3,6 +3,7 @@
 
 #include "3DLibs.h"
 #include "Level.h"
+#include "Camera.h"
 
 class Game
 {
@@ -15,6 +16,15 @@ class Game
 		ID3D11InputLayout*			mInputLayoutBasic;
 		ID3D11VertexShader*			mVertexShader;
 		ID3D11PixelShader*			mPixelShader;
+
+		// Game component
+		Level*	mLevel;
+		Camera*	mCamera;
+
+	private:
+		HRESULT CompileShader( char* shaderFile, char* pEntrypoint, char* pTarget, D3D10_SHADER_MACRO* pDefines, ID3DBlob** pCompiledShader );
+		HRESULT InitializeBasicShaders();
+		HRESULT CreateRasterizerStates();
 
 	public:
 		void	SetRasterizerStateWired( bool isWired );
