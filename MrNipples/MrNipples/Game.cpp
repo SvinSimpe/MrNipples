@@ -51,6 +51,7 @@ HRESULT Game::InitializeBasicShaders()
 	//------------------------
 	ID3DBlob* vs = nullptr;
 	
+
 	if ( SUCCEEDED( hr = CompileShader( "SimpleShader.hlsl", "VS", "vs_5_0", nullptr, &vs ) ) )
 	{
 		if( SUCCEEDED( hr = mDevice->CreateVertexShader( vs->GetBufferPointer(),
@@ -60,7 +61,7 @@ HRESULT Game::InitializeBasicShaders()
 		{
 			D3D11_INPUT_ELEMENT_DESC inputDescBasic[] = {				 
 				{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-				{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+				{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 }
 			};
 
 			hr = mDevice->CreateInputLayout( inputDescBasic,
@@ -197,7 +198,6 @@ HRESULT Game::Initialize( ID3D11Device* device, ID3D11DeviceContext* deviceConte
 
 	// Just for testing!
 	GeometryBox *testBox = new GeometryBox( XMFLOAT3( 0.0f, 0.0f, 0.0f ), 5.0f, 5.0f, 5.0f );
-
 
 	return S_OK;
 }
