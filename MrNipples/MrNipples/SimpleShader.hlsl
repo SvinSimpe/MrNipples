@@ -27,7 +27,7 @@ PixelIn VS( VertexIn input )
 {
 	PixelIn output = (PixelIn)0;
 
-	output.position = mul( float4( input.position, 1.0f ) world );
+	output.position = mul( float4( input.position, 1.0f ), world );
 	output.position	= mul( output.position, view );
 	output.position	= mul( output.position, proj );
 

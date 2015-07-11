@@ -5,7 +5,8 @@
 void Application::Render( float deltaTime )
 {
 	// Clear Back Buffer
-	static float clearColor[4] = { 0.4f, 0.35f, 0.15f, 1.0f };
+	//static float clearColor[4] = { 0.4f, 0.35f, 0.15f, 1.0f };
+	static float clearColor[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
 
 	mDeviceContext->ClearRenderTargetView( mRenderTargetView, clearColor );
 
@@ -16,6 +17,7 @@ void Application::Render( float deltaTime )
 	mDeviceContext->OMSetRenderTargets( 1, &mRenderTargetView, mDepthStencilView );
 
 	//Draw Game here
+	mGame->Render( deltaTime );
 
 	// Swap Front and Back Buffer
 	mSwapChain->Present( 0, 0 );

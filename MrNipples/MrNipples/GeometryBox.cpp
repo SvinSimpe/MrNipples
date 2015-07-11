@@ -4,13 +4,17 @@ unsigned int GeometryBox::sID = 0;
 
 GeometryBox::GeometryBox()
 {
-	mIsVisible = true;
+	mIsVisible	= true;
+	mVertexFaces = nullptr;
 }
 
 GeometryBox::GeometryBox( XMFLOAT3 origin, float width, float height, float depth )
 {
 	mID = sID++;
 	mIsVisible	= true;
+	mVertexFaces = new Vertex32[36];
+	XMStoreFloat4x4( &mPerObjectData.world,  XMMatrixIdentity() );
+	mPerObjectData.color = XMFLOAT3( 1.0f, 1.0f, 1.0f );
 
 	/*
 		       0-------1
@@ -21,7 +25,6 @@ GeometryBox::GeometryBox( XMFLOAT3 origin, float width, float height, float dept
 		   |   4...|...5
 		   | .     | /
 		   6-------7
-
 		   Front  = 236,376
 		   Back   = 105,054
 		   Left   = 024,264
@@ -206,7 +209,9 @@ GeometryBox::GeometryBox( XMFLOAT3 origin, float width, float height, float dept
 }
 
 GeometryBox::~GeometryBox()
-{}
+{
+	delete [] mVertexFaces;
+}
 
 void GeometryBox::IsVisible( bool isVisible )
 {
@@ -217,4 +222,19 @@ void GeometryBox::IsVisible( bool isVisible )
 bool GeometryBox::IsVisible() const
 {
 	return mIsVisible;
+}
+
+Vertex32* GeometryBox::VertexFaces()
+{
+	return mVertexFaces;
+}
+
+PerObjectData GeometryBox::PerObjectData()
+{
+	return mPerObjectData;
+}
+
+void GeometryBox::PerObjectData( XMFLOAT4X4 data )
+{
+	mPerObjectData.world = data;
 }

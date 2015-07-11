@@ -119,7 +119,49 @@ HRESULT Game::CreateRasterizerStates()
 	wiredRazDesc.CullMode			= D3D11_CULL_NONE;
 	wiredRazDesc.DepthClipEnable	= true;
 
+
 	hr = mDevice->CreateRasterizerState( &wiredRazDesc, &mRasterizerStateWired );
+
+	return hr;
+}
+
+HRESULT Game::CreatePerFrameCBuffer()
+{
+	HRESULT hr = S_OK;
+
+	D3D11_BUFFER_DESC cbDesc;
+	cbDesc.ByteWidth = sizeof( mPerFrameData );
+	cbDesc.Usage = D3D11_USAGE_DYNAMIC;
+	cbDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+	cbDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+	cbDesc.MiscFlags = 0;
+	cbDesc.StructureByteStride = 0;
+
+	hr = mDevice->CreateBuffer( &cbDesc, nullptr, &mPerFrameCBuffer );
+
+	return hr;
+}
+
+HRESULT Game::UpdatePerFrameCBuffer()
+{
+HRESULT hr = S_OK;
+
+	XMStoreFloat4x4( &mPerFrameData.view, XMMatrixTranspose( XMLoadFloat4x4( &mCamera->GetViewMatrix() ) ) );
+	XMStoreFloat4x4( &mPerFrameData.projection, XMMatrixTranspose( XMLoadFloat4x4( &mCamera->GetProjectionMatrix() ) ) );
+	mPerFrameData.eyePosition = mCamera->GetEyePosition();
+
+	D3D11_MAPPED_SUBRESOURCE mappedResource;
+	hr = mDeviceContext->Map( mPerFrameCBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource );
+
+	if( SUCCEEDED( hr ) )
+	{
+		memcpy( mappedResource.pData, &mPerFrameData, sizeof(mPerFrameData) );	
+		mDeviceContext->Unmap( mPerFrameCBuffer, 0 );
+
+		// Set constant buffer to shader stages
+		mDeviceContext->VSSetConstantBuffers( 0, 1, &mPerFrameCBuffer );
+		mDeviceContext->PSSetConstantBuffers( 0, 1, &mPerFrameCBuffer );
+	}
 
 	return hr;
 }
@@ -137,67 +179,54 @@ void Game::SetRasterizerStateWired( bool isWired )
 
 void Game::Update( float deltaTime )
 {
+	UpdatePerFrameCBuffer();
+	mLevel->Update( deltaTime );
 }
 
 void Game::Render( float deltaTime )
 {
 	// Set Rasterizer State
-	//mDeviceContext->RSSetState( mCurrentRasterizerState );
+	mDeviceContext->RSSetState( mCurrentRasterizerState );
 
 
-		//// Set basic vertex description
-		//m_deviceContext->IASetInputLayout( m_inputLayoutBasic );
-		//// Set topology
-		//m_deviceContext->IASetPrimitiveTopology( D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+	// Set basic vertex description
+	mDeviceContext->IASetInputLayout( mInputLayoutBasic );
 
-		////Set shader stages
-		//m_deviceContext->VSSetShader( m_vertexShader, nullptr, 0 );
-		//m_deviceContext->HSSetShader( nullptr, nullptr, 0 );
-		//m_deviceContext->DSSetShader( nullptr, nullptr, 0 );
-		//m_deviceContext->GSSetShader( nullptr, nullptr, 0 );
-		//m_deviceContext->PSSetShader( m_pixelShader, nullptr, 0 );
+	// Set topology
+	//mDeviceContext->IASetPrimitiveTopology( D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	mDeviceContext->IASetPrimitiveTopology( D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+	//mDeviceContext->IASetPrimitiveTopology( D3D11_PRIMITIVE_TOPOLOGY_POINTLIST);
 
-
-					// Set position vertex description
-					//m_deviceContext->IASetInputLayout( m_inputLayoutBasic );
-					// Set topology
-					//m_deviceContext->IASetPrimitiveTopology( D3D11_PRIMITIVE_TOPOLOGY_3_CONTROL_POINT_PATCHLIST);
-
-					// Set tessellation shader stages
-					//m_deviceContext->VSSetShader( m_vertexShader, nullptr, 0 );
-					//m_deviceContext->HSSetShader( m_tessHullShader, nullptr, 0 );
-					//m_deviceContext->DSSetShader( m_tessDomainShader, nullptr, 0 );
-					//m_deviceContext->GSSetShader( nullptr, nullptr, 0 );
-					//m_deviceContext->PSSetShader( m_pixelShader, nullptr, 0 );
-
-	/// Set PerFrameCBuffer
-	//m_deviceContext->VSSetConstantBuffers( 0, 1, &m_perFrameCBuffer );
-	//m_deviceContext->PSSetConstantBuffers( 0, 1, &m_perFrameCBuffer );
-
-	/// Light Buffer
-	//m_deviceContext->PSSetConstantBuffers( 2, 1, &m_perFrameLightCBuffer );
+	//Set shader stages
+	mDeviceContext->VSSetShader( mVertexShader, nullptr, 0 );
+	mDeviceContext->HSSetShader( nullptr, nullptr, 0 );
+	mDeviceContext->DSSetShader( nullptr, nullptr, 0 );
+	mDeviceContext->GSSetShader( nullptr, nullptr, 0 );
+	mDeviceContext->PSSetShader( mPixelShader, nullptr, 0 );
 
 	/// RENDER STUFF
-	//m_grid->Render( deltaTime );
-
-	// Swap Front and Back Buffer
-	//return mSwapChain->Present( 0, 0 );
-
+	mLevel->Render( deltaTime );
 }
 
 HRESULT Game::Initialize( ID3D11Device* device, ID3D11DeviceContext* deviceContext )
 {
 	mDevice			= device;
 	mDeviceContext	= deviceContext;
+	mLevel			= new Level();
+	mCamera			= new Camera();
 
-	/*if( FAILED( InitializeBasicShaders() ) )
-		return E_FAIL;*/
+
+	if( FAILED( InitializeBasicShaders() ) )
+		return E_FAIL;
 	
 	if( FAILED( CreateRasterizerStates() ) )
 		return E_FAIL;
 
-	// Just for testing!
-	GeometryBox *testBox = new GeometryBox( XMFLOAT3( 0.0f, 0.0f, 0.0f ), 5.0f, 5.0f, 5.0f );
+	if( FAILED( CreatePerFrameCBuffer() ) )
+		return E_FAIL;
+
+	if( FAILED( mLevel->Initialize( mDevice, mDeviceContext ) ) )
+		return E_FAIL;
 
 	return S_OK;
 }

@@ -11,21 +11,27 @@ struct Vertex32
 
 class GeometryBox
 {
-	
-
 	private:
-		bool	 mIsVisible;
+		unsigned int	mID;
+		bool			mIsVisible;
+		Vertex32*		mVertexFaces;
+		PerObjectData	mPerObjectData;
 
 	public: 
 		static unsigned int sID;
-		unsigned int		mID;
-		Vertex32			mVertexFaces[36];
-
+		
 	public:
 		GeometryBox();
 		GeometryBox( XMFLOAT3 origin, float width, float height, float depth );
 		~GeometryBox();
-		void IsVisible( bool isVisible );
-		bool IsVisible() const;
+
+		unsigned int	ID() const;
+		void			IsVisible( bool isVisible );
+		bool			IsVisible() const;
+		Vertex32*		VertexFaces();
+		PerObjectData	PerObjectData();
+		void			PerObjectData( XMFLOAT4X4 data );
+
+		void			Release();
 };
 #endif

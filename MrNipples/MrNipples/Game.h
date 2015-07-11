@@ -16,6 +16,8 @@ class Game
 		ID3D11InputLayout*			mInputLayoutBasic;
 		ID3D11VertexShader*			mVertexShader;
 		ID3D11PixelShader*			mPixelShader;
+		ID3D11Buffer*				mPerFrameCBuffer;
+		PerFrameData				mPerFrameData;
 
 		// Game component
 		Level*	mLevel;
@@ -25,6 +27,9 @@ class Game
 		HRESULT CompileShader( char* shaderFile, char* pEntrypoint, char* pTarget, D3D10_SHADER_MACRO* pDefines, ID3DBlob** pCompiledShader );
 		HRESULT InitializeBasicShaders();
 		HRESULT CreateRasterizerStates();
+		HRESULT CreatePerFrameCBuffer();
+		HRESULT UpdatePerFrameCBuffer();
+		
 
 	public:
 		void	SetRasterizerStateWired( bool isWired );
