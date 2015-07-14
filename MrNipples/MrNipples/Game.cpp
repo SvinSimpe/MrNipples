@@ -121,7 +121,7 @@ HRESULT Game::CreateRasterizerStates()
 	D3D11_RASTERIZER_DESC wiredRazDesc;
 	memset( &wiredRazDesc, 0, sizeof( wiredRazDesc ) );
 	wiredRazDesc.FillMode			= D3D11_FILL_WIREFRAME;
-	wiredRazDesc.CullMode			= D3D11_CULL_NONE;
+	wiredRazDesc.CullMode			= D3D11_CULL_BACK;
 	wiredRazDesc.DepthClipEnable	= true;
 
 

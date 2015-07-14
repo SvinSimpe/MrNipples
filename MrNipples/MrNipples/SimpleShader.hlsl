@@ -40,7 +40,6 @@ PixelIn VS( VertexIn input )
 
 float4 PS( PixelIn input ) : SV_Target
 {
-	float4 red = float4( 1.0f, 0.0f, 0.0f, 1.0f );
 	//return float4( input.normal, 1.0f );
 	return float4( input.color );
 }

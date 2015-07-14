@@ -14,7 +14,7 @@ HRESULT Level::CreateVertexBuffer()
 	
 
 	///TEST
-	GeometryBox* box = new GeometryBox( XMFLOAT3( 0.0f, 0.0f, 0.54f ), 1.0f, 1.0f, 1.0f );
+	GeometryBox* box = new GeometryBox( XMFLOAT3( 0.0f, 0.0f, 0.0f ), 1.0f, 1.0f, 1.0f );
 
 	D3D11_SUBRESOURCE_DATA vinitData;
 	vinitData.SysMemPitch		= 0;
@@ -31,7 +31,7 @@ HRESULT Level::CreatePerInstanceBuffer()
 	HRESULT hr = S_OK;
 
 	D3D11_BUFFER_DESC ibDesc;
-	ibDesc.ByteWidth			= sizeof( PerInstanceData ) * 2;
+	ibDesc.ByteWidth			= sizeof( PerInstanceData ) * mInstanceData.size();
 	ibDesc.Usage				= D3D11_USAGE_DYNAMIC;
 	ibDesc.BindFlags			= D3D11_BIND_VERTEX_BUFFER;
 	ibDesc.CPUAccessFlags		= D3D11_CPU_ACCESS_WRITE;
@@ -54,62 +54,62 @@ HRESULT Level::UpdatePerInstanceBuffer()
 {
 	HRESULT hr = S_OK;
 	
-	XMVECTOR normalAxis = XMVectorSet( 0.5f, 1.0f, 0.0f, 0.0f );
-
-	XMMATRIX scale          = XMMatrixScaling( 5.0f, 5.0f, 5.0f );
-	//XMMATRIX rotation       = XMMatrixRotationX( mRotation * 10.0f );
-	XMMATRIX rotation       = XMMatrixRotationAxis( normalAxis, XMConvertToRadians( 450 * mRotation ) );
-	XMMATRIX translation    = XMMatrixTranslation( 0.0f, 0.0f, 0.0f );
-	
-	XMMATRIX finalTransform = scale * rotation * translation;
-	
-	XMFLOAT4X4 world;
-	
-	XMStoreFloat4x4( &world, XMMatrixTranspose( finalTransform ) );
-	mBox->PerInstanceData( world );
+	//XMMATRIX scale          = XMMatrixScaling( 5.0f, 5.0f, 5.0f );
+	//XMMATRIX rotation       = XMMatrixIdentity();// XMMatrixRotationY( mRotation * 10.0f );
+	//XMMATRIX translation    = XMMatrixTranslation( 0.0f, 0.0f, 0.0f );
+	//
+	//XMMATRIX finalTransform = scale * rotation * translation;
+	//
+	//XMFLOAT4X4 world;
+	//
+	//XMStoreFloat4x4( &world, XMMatrixTranspose( finalTransform ) );
+	//mBox->PerInstanceData( world );
+	int i = 1;
+	for each ( PerInstanceData instance in mInstanceData )
+	{
+		XMStoreFloat4x4( &instance.world,  XMMatrixScaling( 5.0f, 5.0f, 5.0f ) *
+															XMMatrixRotationRollPitchYaw( XMConvertToRadians( 0.0f ),
+																						  XMConvertToRadians( mRotation * 10.0f ),
+																						  XMConvertToRadians( 0.0f ) ) *
+															XMMatrixTranslation( 0.0f, 0.0f, (float)(i * 10) ) ) ;
+		i++;
+	}
 	
 	D3D11_MAPPED_SUBRESOURCE mappedResource;
 	hr = mDeviceContext->Map( mInstanceBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource );
 	
 	if( SUCCEEDED( hr ) )
 	{
-	    memcpy( mappedResource.pData, &mBox->PerInstanceData(), sizeof(PerInstanceData) );
+		memcpy( mappedResource.pData, &mInstanceData[0], sizeof(PerInstanceData) * mInstanceData.size() );
 	    mDeviceContext->Unmap( mInstanceBuffer, 0 ); 
 	}
 
 	return hr;
 }
 
-void Level::AddBox( XMFLOAT3 origin, float width, float height, float depth, float R, float G, float B )
+void Level::AddBox( XMFLOAT3 scale, XMFLOAT3 rotation, XMFLOAT3 translation, XMFLOAT3 color )
 {
-	GeometryBox *box = new GeometryBox( origin, width, height, depth );
+	PerInstanceData newInstance;
 
-	/*
-		- Store color in PerInstanceData[ID]
-		-
+	// Construct World matrix
+	XMStoreFloat4x4( &newInstance.world,  XMMatrixScaling( scale.x, scale.y, scale.z ) *
+															XMMatrixRotationRollPitchYaw( XMConvertToRadians( rotation.x ),
+																						  XMConvertToRadians( rotation.y ),
+																						  XMConvertToRadians( rotation.z ) ) *
+															XMMatrixTranslation( translation.x, translation.y, translation.z ) ) ;
 
-		
+	//XMMATRIX scaleM          = XMMatrixScaling( scale.x, scale.y, scale.z );
+	//XMMATRIX rotationM       = XMMatrixIdentity();// XMMatrixRotationY( mRotation * 10.0f );
+	//XMMATRIX translationM    = XMMatrixTranslation( translation.x, translation.y, translation.z );
+	//
+	//XMMATRIX finalTransform = scaleM * rotationM * translationM;
+	//XMStoreFloat4x4( &newInstance.world, finalTransform );
 
-		XMFLOAT3( R, G, B );
 
-	*/
-	
-}
+	newInstance.color = XMFLOAT4( color.x, color.y, color.z, 1.0f );
 
-void Level::AddGeometry( GeometryBox newBox )
-{
-	mLevelGeometry.push_back( &newBox );
-}
-
-void Level::SetObjectToRender( int ID, bool renderObject )
-{
-	// Set object as visible
-	if( renderObject && !mLevelGeometry[ID]->IsVisible() )
-		mLevelGeometry[ID]->IsVisible( true );
-
-	// Set object as NOT visible
-	else if( !renderObject && mLevelGeometry[ID]->IsVisible() )
-		mLevelGeometry[ID]->IsVisible( false );
+	// Add new instance to collection
+	mInstanceData.push_back( newInstance );
 }
 
 void Level::CheckCollision()
@@ -145,25 +145,30 @@ void Level::Update( float deltaTime )
 
 void Level::Render( float deltaTime )
 {
-	//UINT32 vertexSize	= sizeof( Vertex32 );
-	//UINT32 offset		= 0;
-	//ID3D11Buffer* buffersToSet[] = { mObjectVertexBuffer };
-	//mDeviceContext->IASetVertexBuffers( 0, 1, buffersToSet, &vertexSize, &offset );
-
-	//mDeviceContext->Draw( 36, 0 );
-
 	UINT32 stride[2]				= { sizeof(Vertex32), sizeof(PerInstanceData) };
 	UINT32 offset[2]				= { 0, 0 };
 	ID3D11Buffer* buffersToSet[2]	= { mObjectVertexBuffer, mInstanceBuffer };
 	mDeviceContext->IASetVertexBuffers( 0, 2, buffersToSet, stride, offset );
 
-	mDeviceContext->DrawInstanced( NUM_VERTICES_PER_OBJECT, 1, 0, 0 );
+	mDeviceContext->DrawInstanced( NUM_VERTICES_PER_OBJECT, mInstanceData.size(), 0, 0 );
 }
 
 HRESULT Level::Initialize( ID3D11Device* device, ID3D11DeviceContext* deviceContext )
 {
 	mDevice			= device;
 	mDeviceContext	= deviceContext;
+
+		///				   TEST
+	//========================================
+	for ( size_t i = 0; i < 10000; i++ )
+	{
+		float R = (float)(rand() % 255) / 255.0f;
+		float G = (float)(rand() % 255) / 255.0f;
+		float B = (float)(rand() % 255) / 255.0f;
+		
+		AddBox( XMFLOAT3( 5.0f, 5.0f, 5.0f ), XMFLOAT3( 0.0f, (float)(i) * 10.0f, 0.0f ), XMFLOAT3( 0.0f , 0.0f, (float)i * 10.0f ), XMFLOAT3( R, G, B ) );
+	}
+	//========================================
 
 	if( FAILED( CreateVertexBuffer() ) )
 		return E_FAIL;
