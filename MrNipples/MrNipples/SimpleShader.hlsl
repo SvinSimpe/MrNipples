@@ -15,6 +15,7 @@ struct VertexIn
 {
 	float3 position	: POSITION;
 	float3 normal	: NORMAL;
+
 };
 
 struct PixelIn
@@ -38,5 +39,5 @@ PixelIn VS( VertexIn input )
 
 float4 PS( PixelIn input ) : SV_Target
 {
-	return float4( color, 1.0f );
+	return float4( color, 0.0f );
 }

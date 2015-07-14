@@ -102,7 +102,7 @@ HRESULT Game::CreateRasterizerStates()
 	D3D11_RASTERIZER_DESC solidRazDesc;
 	memset( &solidRazDesc, 0, sizeof( solidRazDesc ) );
 	solidRazDesc.FillMode			= D3D11_FILL_SOLID;
-	solidRazDesc.CullMode			= D3D11_CULL_NONE;
+	solidRazDesc.CullMode			= D3D11_CULL_BACK;
 	solidRazDesc.DepthClipEnable	= true;
 
 	hr = mDevice->CreateRasterizerState( &solidRazDesc, &mRasterizerStateSolid );
@@ -116,7 +116,7 @@ HRESULT Game::CreateRasterizerStates()
 	D3D11_RASTERIZER_DESC wiredRazDesc;
 	memset( &wiredRazDesc, 0, sizeof( wiredRazDesc ) );
 	wiredRazDesc.FillMode			= D3D11_FILL_WIREFRAME;
-	wiredRazDesc.CullMode			= D3D11_CULL_NONE;
+	wiredRazDesc.CullMode			= D3D11_CULL_BACK;
 	wiredRazDesc.DepthClipEnable	= true;
 
 
@@ -193,8 +193,8 @@ void Game::Render( float deltaTime )
 	mDeviceContext->IASetInputLayout( mInputLayoutBasic );
 
 	// Set topology
-	//mDeviceContext->IASetPrimitiveTopology( D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-	mDeviceContext->IASetPrimitiveTopology( D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+	mDeviceContext->IASetPrimitiveTopology( D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	//mDeviceContext->IASetPrimitiveTopology( D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
 	//mDeviceContext->IASetPrimitiveTopology( D3D11_PRIMITIVE_TOPOLOGY_POINTLIST);
 
 	//Set shader stages

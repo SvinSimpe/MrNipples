@@ -2,7 +2,7 @@
 
 Camera::Camera()
 {
-	mEyePosition		= XMFLOAT3( -5.0f, 1.0f, -5.0f);
+	mEyePosition		= XMFLOAT3( -5.0f, 3.0f, -5.0f);
 	mFocusPosition		= XMFLOAT3( 0.0f, 0.0f,  0.0f );
 	mUpDirection		= XMFLOAT3( 0.0f, 1.0f,  0.0f );
 	mRightDirection		= XMFLOAT3( 1.0f, 0.0f,  0.0f );

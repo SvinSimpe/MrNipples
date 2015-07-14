@@ -101,8 +101,8 @@ GeometryBox::GeometryBox( XMFLOAT3 origin, float width, float height, float dept
 	mVertexFaces[8] = v5;
 
 	mVertexFaces[9]  = v0;
-	mVertexFaces[10] = v5;
-	mVertexFaces[11] = v4;
+	mVertexFaces[10] = v4;
+	mVertexFaces[11] = v5;
 
 
 	// Left face
