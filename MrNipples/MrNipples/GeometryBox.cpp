@@ -13,8 +13,8 @@ GeometryBox::GeometryBox( XMFLOAT3 origin, float width, float height, float dept
 	mID = sID++;
 	mIsVisible	= true;
 	mVertexFaces = new Vertex32[36];
-	XMStoreFloat4x4( &mPerObjectData.world,  XMMatrixIdentity() );
-	mPerObjectData.color = XMFLOAT3( 0.18f, 0.36f, 0.54f );
+	XMStoreFloat4x4( &mPerInstanceData.world,  XMMatrixTranspose( XMMatrixIdentity() ) );
+	mPerInstanceData.color = XMFLOAT4( 0.18f, 0.36f, 0.54f, 1.0f );
 
 	/*
 		       0-------1
@@ -229,12 +229,12 @@ Vertex32* GeometryBox::VertexFaces()
 	return mVertexFaces;
 }
 
-PerObjectData GeometryBox::PerObjectData()
+PerInstanceData GeometryBox::PerInstanceData()
 {
-	return mPerObjectData;
+	return mPerInstanceData;
 }
 
-void GeometryBox::PerObjectData( XMFLOAT4X4 data )
+void GeometryBox::PerInstanceData( XMFLOAT4X4 data )
 {
-	mPerObjectData.world = data;
+	mPerInstanceData.world = data;
 }

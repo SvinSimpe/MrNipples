@@ -6,7 +6,7 @@ void Application::Render( float deltaTime )
 {
 	// Clear Back Buffer
 	//static float clearColor[4] = { 0.4f, 0.35f, 0.15f, 1.0f };
-	static float clearColor[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
+	static float clearColor[4] = { 0.7f, 0.7f, 0.7f, 1.0f };
 
 	mDeviceContext->ClearRenderTargetView( mRenderTargetView, clearColor );
 
@@ -289,7 +289,7 @@ HRESULT Application::InitializeDirectX11()
 		hr = D3D11CreateDeviceAndSwapChain( nullptr,
 											driverTypes[driverTypeIndex],
 											NULL,
-											0,
+											D3D11_CREATE_DEVICE_DEBUG,
 											featureLevelsToTry,
 											ARRAYSIZE( featureLevelsToTry ),
 											D3D11_SDK_VERSION,

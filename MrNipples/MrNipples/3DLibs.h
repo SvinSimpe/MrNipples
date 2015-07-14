@@ -19,11 +19,10 @@
 using namespace DirectX;
 ///---------------------------------------------------
 
-struct PerObjectData
+struct PerInstanceData
 {
 	XMFLOAT4X4  world;
-	XMFLOAT3	color;
-	float		padding;
+	XMFLOAT4	color;
 };
 
 struct PerFrameData

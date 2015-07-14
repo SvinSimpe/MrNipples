@@ -14,18 +14,18 @@ class Level
 		ID3D11DeviceContext*		mDeviceContext;
 		std::vector<GeometryBox*>	mLevelGeometry;
 		ID3D11Buffer*				mObjectVertexBuffer;
-		ID3D11Buffer*				mPerObjectCBuffer; // mObjectCBuffer ??
+		ID3D11Buffer*				mInstanceBuffer;
 
 		///TEST
 		GeometryBox* mBox;
 		float		 mRotation;
 
 	private:
-		HRESULT CreateVertexBuffer( unsigned int nrOfObjects );
-		HRESULT CreatePerObjectCBuffer();
+		HRESULT CreateVertexBuffer();
+		HRESULT CreatePerInstanceBuffer();
 
 		HRESULT UpdateObjectVertexBuffer();
-		HRESULT UpdatePerObjectCBuffer();
+		HRESULT UpdatePerInstanceBuffer();
 
 	public:
 		void	AddBox( XMFLOAT3 origin, float width, float height, float depth, float R, float G, float B );

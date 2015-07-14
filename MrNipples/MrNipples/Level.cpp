@@ -1,47 +1,44 @@
 #include "Level.h"
 
-HRESULT Level::CreateVertexBuffer( unsigned int nrOfObjects )
+HRESULT Level::CreateVertexBuffer()
 {
 	HRESULT hr = S_OK;
 
-	if( nrOfObjects > MAX_NUM_OF_OBJECTS )
-		nrOfObjects = MAX_NUM_OF_OBJECTS;
-
 	D3D11_BUFFER_DESC vbd;
-	vbd.ByteWidth			= sizeof(Vertex32) * NUM_VERTICES_PER_OBJECT * nrOfObjects;
+	vbd.ByteWidth			= sizeof(Vertex32) * NUM_VERTICES_PER_OBJECT;
 	vbd.StructureByteStride = sizeof(Vertex32);
-	vbd.Usage				= D3D11_USAGE_DYNAMIC;
+	vbd.Usage				= D3D11_USAGE_IMMUTABLE;
 	vbd.BindFlags			= D3D11_BIND_VERTEX_BUFFER;
-	vbd.CPUAccessFlags		= D3D11_CPU_ACCESS_WRITE;
+	vbd.CPUAccessFlags		= 0;
 	vbd.MiscFlags			= 0;
 	
 
 	///TEST
-	GeometryBox* box = new GeometryBox( XMFLOAT3( 0.0f, 0.0f, 0.0f ), 2.0f, 2.0f, 2.0f );
+	GeometryBox* box = new GeometryBox( XMFLOAT3( 0.0f, 0.0f, 0.54f ), 1.0f, 1.0f, 1.0f );
 
 	D3D11_SUBRESOURCE_DATA vinitData;
 	vinitData.SysMemPitch		= 0;
 	vinitData.SysMemSlicePitch	= 0;
 	vinitData.pSysMem			= &box->VertexFaces()[0];
 
-	hr = mDevice->CreateBuffer(&vbd, &vinitData, &mObjectVertexBuffer);
+	hr = mDevice->CreateBuffer( &vbd, &vinitData, &mObjectVertexBuffer );
 	
 	return hr;
 }
 
-HRESULT Level::CreatePerObjectCBuffer()
+HRESULT Level::CreatePerInstanceBuffer()
 {
 	HRESULT hr = S_OK;
 
-	D3D11_BUFFER_DESC cbDesc;
-	cbDesc.ByteWidth			= sizeof( PerObjectData );
-	cbDesc.Usage				= D3D11_USAGE_DYNAMIC;
-	cbDesc.BindFlags			= D3D11_BIND_CONSTANT_BUFFER;
-	cbDesc.CPUAccessFlags		= D3D11_CPU_ACCESS_WRITE;
-	cbDesc.MiscFlags			= 0;
-	cbDesc.StructureByteStride	= 0;
+	D3D11_BUFFER_DESC ibDesc;
+	ibDesc.ByteWidth			= sizeof( PerInstanceData ) * 2;
+	ibDesc.Usage				= D3D11_USAGE_DYNAMIC;
+	ibDesc.BindFlags			= D3D11_BIND_VERTEX_BUFFER;
+	ibDesc.CPUAccessFlags		= D3D11_CPU_ACCESS_WRITE;
+	ibDesc.MiscFlags			= 0;
+	ibDesc.StructureByteStride	= 0;
 
-	hr = mDevice->CreateBuffer( &cbDesc, nullptr, &mPerObjectCBuffer );
+	hr = mDevice->CreateBuffer( &ibDesc, nullptr, &mInstanceBuffer );
 
 	return hr;
 }
@@ -53,27 +50,31 @@ HRESULT Level::UpdateObjectVertexBuffer()
 	return hr;
 }
 
-HRESULT Level::UpdatePerObjectCBuffer()
+HRESULT Level::UpdatePerInstanceBuffer()
 {
 	HRESULT hr = S_OK;
 	
+	XMVECTOR normalAxis = XMVectorSet( 0.5f, 1.0f, 0.0f, 0.0f );
+
+	XMMATRIX scale          = XMMatrixScaling( 5.0f, 5.0f, 5.0f );
+	//XMMATRIX rotation       = XMMatrixRotationX( mRotation * 10.0f );
+	XMMATRIX rotation       = XMMatrixRotationAxis( normalAxis, XMConvertToRadians( 450 * mRotation ) );
+	XMMATRIX translation    = XMMatrixTranslation( 0.0f, 0.0f, 0.0f );
+	
+	XMMATRIX finalTransform = scale * rotation * translation;
+	
 	XMFLOAT4X4 world;
-
-	XMStoreFloat4x4( &world, XMMatrixTranspose( XMMatrixRotationY( mRotation * 10.0f ) ) );
-	mBox->PerObjectData( world );
-
+	
+	XMStoreFloat4x4( &world, XMMatrixTranspose( finalTransform ) );
+	mBox->PerInstanceData( world );
+	
 	D3D11_MAPPED_SUBRESOURCE mappedResource;
-	hr = mDeviceContext->Map( mPerObjectCBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource );
-
-	if(SUCCEEDED( hr ))
+	hr = mDeviceContext->Map( mInstanceBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource );
+	
+	if( SUCCEEDED( hr ) )
 	{
-		memcpy( mappedResource.pData, &mBox->PerObjectData(), sizeof(PerObjectData) );
-		/*memcpy( mappedResource.pData, &m_perObjectData, sizeof(m_perObjectData) );*/	
-		mDeviceContext->Unmap( mPerObjectCBuffer, 0 );
-
-		// Set constant buffer to shader stages
-		mDeviceContext->VSSetConstantBuffers( 1, 1, &mPerObjectCBuffer );
-		mDeviceContext->PSSetConstantBuffers( 1, 1, &mPerObjectCBuffer );	
+	    memcpy( mappedResource.pData, &mBox->PerInstanceData(), sizeof(PerInstanceData) );
+	    mDeviceContext->Unmap( mInstanceBuffer, 0 ); 
 	}
 
 	return hr;
@@ -84,7 +85,7 @@ void Level::AddBox( XMFLOAT3 origin, float width, float height, float depth, flo
 	GeometryBox *box = new GeometryBox( origin, width, height, depth );
 
 	/*
-		- Store color in PerObjectData[ID]
+		- Store color in PerInstanceData[ID]
 		-
 
 		
@@ -138,18 +139,25 @@ void Level::Update( float deltaTime )
 	if( FAILED( UpdateObjectVertexBuffer() ) )
 		OutputDebugStringA( "FAILED TO UPDATE OBJECT VERTEX BUFFER :: Level.cpp" );
 
-	if( FAILED( UpdatePerObjectCBuffer() ) )
-		OutputDebugStringA( "FAILED TO UPDATE PER OBJECT CONSTANT BUFFER :: Level.cpp" );
+	if( FAILED( UpdatePerInstanceBuffer() ) )
+		OutputDebugStringA( "FAILED TO UPDATE PER INSTANCE BUFFER :: Level.cpp" );
 }
 
 void Level::Render( float deltaTime )
 {
-	UINT32 vertexSize	= sizeof( Vertex32 );
-	UINT32 offset		= 0;
-	ID3D11Buffer* buffersToSet[] = { mObjectVertexBuffer };
-	mDeviceContext->IASetVertexBuffers( 0, 1, buffersToSet, &vertexSize, &offset );
+	//UINT32 vertexSize	= sizeof( Vertex32 );
+	//UINT32 offset		= 0;
+	//ID3D11Buffer* buffersToSet[] = { mObjectVertexBuffer };
+	//mDeviceContext->IASetVertexBuffers( 0, 1, buffersToSet, &vertexSize, &offset );
 
-	mDeviceContext->Draw( 36, 0 );
+	//mDeviceContext->Draw( 36, 0 );
+
+	UINT32 stride[2]				= { sizeof(Vertex32), sizeof(PerInstanceData) };
+	UINT32 offset[2]				= { 0, 0 };
+	ID3D11Buffer* buffersToSet[2]	= { mObjectVertexBuffer, mInstanceBuffer };
+	mDeviceContext->IASetVertexBuffers( 0, 2, buffersToSet, stride, offset );
+
+	mDeviceContext->DrawInstanced( NUM_VERTICES_PER_OBJECT, 1, 0, 0 );
 }
 
 HRESULT Level::Initialize( ID3D11Device* device, ID3D11DeviceContext* deviceContext )
@@ -157,10 +165,10 @@ HRESULT Level::Initialize( ID3D11Device* device, ID3D11DeviceContext* deviceCont
 	mDevice			= device;
 	mDeviceContext	= deviceContext;
 
-	if( FAILED( CreateVertexBuffer( 5 ) ) )
+	if( FAILED( CreateVertexBuffer() ) )
 		return E_FAIL;
 
-	if( FAILED( CreatePerObjectCBuffer() ) )
+	if( FAILED( CreatePerInstanceBuffer() ) )
 		return E_FAIL;
 
 	return S_OK;

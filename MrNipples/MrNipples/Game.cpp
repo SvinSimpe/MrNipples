@@ -59,16 +59,21 @@ HRESULT Game::InitializeBasicShaders()
 														  nullptr,
 														  &mVertexShader ) ) )
 		{
-			D3D11_INPUT_ELEMENT_DESC inputDescBasic[] = {				 
-				{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-				{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 }
+			D3D11_INPUT_ELEMENT_DESC inputDescInstanced[] = {				 
+				{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT,    0,  0, D3D11_INPUT_PER_VERTEX_DATA,   0 },
+				{ "NORMAL",	  0, DXGI_FORMAT_R32G32B32_FLOAT,    0, 12, D3D11_INPUT_PER_VERTEX_DATA,   0 },
+				{ "WORLD",	  0, DXGI_FORMAT_R32G32B32A32_FLOAT, 1,  0, D3D11_INPUT_PER_INSTANCE_DATA, 1 },
+				{ "WORLD",	  1, DXGI_FORMAT_R32G32B32A32_FLOAT, 1, 16, D3D11_INPUT_PER_INSTANCE_DATA, 1 },
+				{ "WORLD",	  2, DXGI_FORMAT_R32G32B32A32_FLOAT, 1, 32, D3D11_INPUT_PER_INSTANCE_DATA, 1 },
+				{ "WORLD",	  3, DXGI_FORMAT_R32G32B32A32_FLOAT, 1, 48, D3D11_INPUT_PER_INSTANCE_DATA, 1 },
+				{ "COLOR",	  0, DXGI_FORMAT_R32G32B32A32_FLOAT, 1, 64, D3D11_INPUT_PER_INSTANCE_DATA, 1 }
 			};
 
-			hr = mDevice->CreateInputLayout( inputDescBasic,
-									     	  ARRAYSIZE( inputDescBasic ),
+			hr = mDevice->CreateInputLayout( inputDescInstanced,
+									     	  ARRAYSIZE( inputDescInstanced ),
 											  vs->GetBufferPointer(),
 											  vs->GetBufferSize(),
-											  &mInputLayoutBasic );
+											  &mInputLayoutInstanced );
 		}
 
 		vs->Release();
@@ -116,7 +121,7 @@ HRESULT Game::CreateRasterizerStates()
 	D3D11_RASTERIZER_DESC wiredRazDesc;
 	memset( &wiredRazDesc, 0, sizeof( wiredRazDesc ) );
 	wiredRazDesc.FillMode			= D3D11_FILL_WIREFRAME;
-	wiredRazDesc.CullMode			= D3D11_CULL_BACK;
+	wiredRazDesc.CullMode			= D3D11_CULL_NONE;
 	wiredRazDesc.DepthClipEnable	= true;
 
 
@@ -190,12 +195,12 @@ void Game::Render( float deltaTime )
 
 
 	// Set basic vertex description
-	mDeviceContext->IASetInputLayout( mInputLayoutBasic );
+	mDeviceContext->IASetInputLayout( mInputLayoutInstanced );
 
 	// Set topology
 	mDeviceContext->IASetPrimitiveTopology( D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	//mDeviceContext->IASetPrimitiveTopology( D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
-	//mDeviceContext->IASetPrimitiveTopology( D3D11_PRIMITIVE_TOPOLOGY_POINTLIST);
+
 
 	//Set shader stages
 	mDeviceContext->VSSetShader( mVertexShader, nullptr, 0 );
@@ -233,14 +238,14 @@ HRESULT Game::Initialize( ID3D11Device* device, ID3D11DeviceContext* deviceConte
 
 Game::Game()
 {
-	mDevice					= nullptr;
-	mDeviceContext			= nullptr;
-	mRasterizerStateSolid	= nullptr;
-	mRasterizerStateWired	= nullptr;
-	mCurrentRasterizerState = nullptr;	
-	mInputLayoutBasic		= nullptr;
-	mVertexShader			= nullptr;
-	mPixelShader			= nullptr;
+	mDevice						= nullptr;
+	mDeviceContext				= nullptr;
+	mRasterizerStateSolid		= nullptr;
+	mRasterizerStateWired		= nullptr;
+	mCurrentRasterizerState		= nullptr;	
+	mInputLayoutInstanced		= nullptr;
+	mVertexShader				= nullptr;
+	mPixelShader				= nullptr;
 
 	mLevel	= nullptr;
 	mCamera	= nullptr;
@@ -254,7 +259,7 @@ void Game::Release()
 {
 	SAFE_RELEASE( mRasterizerStateSolid );
 	SAFE_RELEASE( mRasterizerStateWired );
-	SAFE_RELEASE( mInputLayoutBasic );
+	SAFE_RELEASE( mInputLayoutInstanced );
 	SAFE_RELEASE( mVertexShader );
 	SAFE_RELEASE( mPixelShader );
 

@@ -15,7 +15,7 @@ class GeometryBox
 		unsigned int	mID;
 		bool			mIsVisible;
 		Vertex32*		mVertexFaces;
-		PerObjectData	mPerObjectData;
+		PerInstanceData	mPerInstanceData;
 
 	public: 
 		static unsigned int sID;
@@ -29,8 +29,8 @@ class GeometryBox
 		void			IsVisible( bool isVisible );
 		bool			IsVisible() const;
 		Vertex32*		VertexFaces();
-		PerObjectData	PerObjectData();
-		void			PerObjectData( XMFLOAT4X4 data );
+		PerInstanceData	PerInstanceData();
+		void			PerInstanceData( XMFLOAT4X4 data );
 
 		void			Release();
 };
