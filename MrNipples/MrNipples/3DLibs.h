@@ -19,17 +19,27 @@
 using namespace DirectX;
 ///---------------------------------------------------
 
-struct PerInstanceData
+struct PerInstanceData // 80 byte
 {
 	XMFLOAT4X4  world;
 	XMFLOAT4	color;
 };
 
-struct PerFrameData
+struct PerFrameData // 144 byte
 {
 	XMFLOAT4X4  view;
 	XMFLOAT4X4  projection;
 	XMFLOAT3	eyePosition;
+	float		padding;
+};
+
+struct PointLightData // 80 byte
+{
+	XMFLOAT4	positionAndRadius;
+	XMFLOAT4	ambient;
+	XMFLOAT4	diffuse;
+	XMFLOAT4	specular;
+	XMFLOAT3	attenuation;
 	float		padding;
 };
 

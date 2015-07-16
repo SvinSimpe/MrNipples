@@ -43,6 +43,23 @@ HRESULT Level::CreatePerInstanceBuffer()
 	return hr;
 }
 
+HRESULT Level::CreateLightBuffer()
+{
+	HRESULT hr = S_OK;
+
+	D3D11_BUFFER_DESC lbDesc;
+	lbDesc.ByteWidth			= sizeof( PointLightData ) * mPointLightData.size();
+	lbDesc.Usage				= D3D11_USAGE_DYNAMIC;
+	lbDesc.BindFlags			= D3D11_BIND_CONSTANT_BUFFER;
+	lbDesc.CPUAccessFlags		= D3D11_CPU_ACCESS_WRITE;
+	lbDesc.MiscFlags			= 0;
+	lbDesc.StructureByteStride	= 0;
+
+	hr = mDevice->CreateBuffer( &lbDesc, nullptr, &mLightBuffer );
+
+	return hr;
+}
+
 HRESULT Level::UpdateObjectVertexBuffer()
 {
 	HRESULT hr = S_OK;
@@ -53,28 +70,7 @@ HRESULT Level::UpdateObjectVertexBuffer()
 HRESULT Level::UpdatePerInstanceBuffer()
 {
 	HRESULT hr = S_OK;
-	
-	//XMMATRIX scale          = XMMatrixScaling( 5.0f, 5.0f, 5.0f );
-	//XMMATRIX rotation       = XMMatrixIdentity();// XMMatrixRotationY( mRotation * 10.0f );
-	//XMMATRIX translation    = XMMatrixTranslation( 0.0f, 0.0f, 0.0f );
-	//
-	//XMMATRIX finalTransform = scale * rotation * translation;
-	//
-	//XMFLOAT4X4 world;
-	//
-	//XMStoreFloat4x4( &world, XMMatrixTranspose( finalTransform ) );
-	//mBox->PerInstanceData( world );
-	int i = 1;
-	for each ( PerInstanceData instance in mInstanceData )
-	{
-		XMStoreFloat4x4( &instance.world,  XMMatrixScaling( 5.0f, 5.0f, 5.0f ) *
-															XMMatrixRotationRollPitchYaw( XMConvertToRadians( 0.0f ),
-																						  XMConvertToRadians( mRotation * 10.0f ),
-																						  XMConvertToRadians( 0.0f ) ) *
-															XMMatrixTranslation( 0.0f, 0.0f, (float)(i * 10) ) ) ;
-		i++;
-	}
-	
+		
 	D3D11_MAPPED_SUBRESOURCE mappedResource;
 	hr = mDeviceContext->Map( mInstanceBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource );
 	
@@ -82,6 +78,41 @@ HRESULT Level::UpdatePerInstanceBuffer()
 	{
 		memcpy( mappedResource.pData, &mInstanceData[0], sizeof(PerInstanceData) * mInstanceData.size() );
 	    mDeviceContext->Unmap( mInstanceBuffer, 0 ); 
+	}
+
+	return hr;
+}
+
+HRESULT Level::UpdateLightBuffer()
+{
+	HRESULT hr = S_OK;
+		
+	float zMin = -5.0f;
+	float zMax = 1000.0f;
+
+	if( mPointLightData.at(0).positionAndRadius.z < zMax && mDirection == 1 )
+		mPointLightData.at(0).positionAndRadius.z += 0.02f;
+
+	if( mPointLightData.at(0).positionAndRadius.z > zMax )
+		mDirection = 0;
+
+	if( mPointLightData.at(0).positionAndRadius.z > zMin && mDirection == 0 )
+		mPointLightData.at(0).positionAndRadius.z -= 0.02f;
+
+	if( mPointLightData.at(0).positionAndRadius.z < zMin )
+		mDirection = 1;
+
+	D3D11_MAPPED_SUBRESOURCE mappedResource;
+	hr = mDeviceContext->Map( mLightBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource );
+	
+	if( SUCCEEDED( hr ) )
+	{
+		memcpy( mappedResource.pData, &mPointLightData[0], sizeof(PointLightData) * mPointLightData.size() );
+	    mDeviceContext->Unmap( mLightBuffer, 0 ); 
+
+		// Set constant buffer to shader stages
+		mDeviceContext->VSSetConstantBuffers( 1, 1, &mLightBuffer );
+		mDeviceContext->PSSetConstantBuffers( 1, 1, &mLightBuffer );
 	}
 
 	return hr;
@@ -97,14 +128,6 @@ void Level::AddBox( XMFLOAT3 scale, XMFLOAT3 rotation, XMFLOAT3 translation, XMF
 																						  XMConvertToRadians( rotation.y ),
 																						  XMConvertToRadians( rotation.z ) ) *
 															XMMatrixTranslation( translation.x, translation.y, translation.z ) ) ;
-
-	//XMMATRIX scaleM          = XMMatrixScaling( scale.x, scale.y, scale.z );
-	//XMMATRIX rotationM       = XMMatrixIdentity();// XMMatrixRotationY( mRotation * 10.0f );
-	//XMMATRIX translationM    = XMMatrixTranslation( translation.x, translation.y, translation.z );
-	//
-	//XMMATRIX finalTransform = scaleM * rotationM * translationM;
-	//XMStoreFloat4x4( &newInstance.world, finalTransform );
-
 
 	newInstance.color = XMFLOAT4( color.x, color.y, color.z, 1.0f );
 
@@ -141,6 +164,9 @@ void Level::Update( float deltaTime )
 
 	if( FAILED( UpdatePerInstanceBuffer() ) )
 		OutputDebugStringA( "FAILED TO UPDATE PER INSTANCE BUFFER :: Level.cpp" );
+
+	if( FAILED( UpdateLightBuffer() ) )
+		OutputDebugStringA( "FAILED TO UPDATE LIGHT BUFFER :: Level.cpp" );
 }
 
 void Level::Render( float deltaTime )
@@ -158,16 +184,33 @@ HRESULT Level::Initialize( ID3D11Device* device, ID3D11DeviceContext* deviceCont
 	mDevice			= device;
 	mDeviceContext	= deviceContext;
 
-		///				   TEST
+	//				GEOMETRY
 	//========================================
-	for ( size_t i = 0; i < 10000; i++ )
+	for ( size_t i = 0; i < 100; i++ )
 	{
-		float R = (float)(rand() % 255) / 255.0f;
-		float G = (float)(rand() % 255) / 255.0f;
-		float B = (float)(rand() % 255) / 255.0f;
+		float R = (float)(rand() % 255) * 0.00392f; // "Same" as divided by 255 but faster
+		float G = (float)(rand() % 255) * 0.00392f; //
+		float B = (float)(rand() % 255) * 0.00392f;	//
 		
-		AddBox( XMFLOAT3( 5.0f, 5.0f, 5.0f ), XMFLOAT3( 0.0f, (float)(i) * 10.0f, 0.0f ), XMFLOAT3( 0.0f , 0.0f, (float)i * 10.0f ), XMFLOAT3( R, G, B ) );
+		AddBox( XMFLOAT3( 10.0f, 10.0f, 10.0f ),
+				XMFLOAT3( 0.0f, 0.0f, (float)(i) * 5.0f ),
+				XMFLOAT3( 0.0f , 0.0f, (float)i * 10.0f ),
+				XMFLOAT3( R, G, B ) );
 	}
+	//========================================
+
+	//				LIGHT
+	//========================================
+	mDirection = 1;
+
+	PointLightData light;
+	light.positionAndRadius = XMFLOAT4( -5.0f, 7.0f, 30.0f, 100.0f );
+	light.ambient			= XMFLOAT4( 0.0f, 0.0f, 0.0f, 1.0f );
+	light.diffuse			= XMFLOAT4( 1.0f, 1.0f, 1.0f, 1.0f );
+	light.specular			= XMFLOAT4( 1.0f, 1.0f, 1.0f, 1.0f );
+	light.attenuation		= XMFLOAT3( 0.0f, 0.02f, 0.0f );
+
+	mPointLightData.push_back( light );
 	//========================================
 
 	if( FAILED( CreateVertexBuffer() ) )
@@ -175,15 +218,21 @@ HRESULT Level::Initialize( ID3D11Device* device, ID3D11DeviceContext* deviceCont
 
 	if( FAILED( CreatePerInstanceBuffer() ) )
 		return E_FAIL;
+	
+	if( FAILED( CreateLightBuffer() ) )
+		return E_FAIL;
 
 	return S_OK;
 }
 
 Level::Level()
 {
-	mDevice			= nullptr;
-	mDeviceContext	= nullptr;
-
+	mDevice				= nullptr;
+	mDeviceContext		= nullptr;
+	mObjectVertexBuffer	= nullptr;
+	mInstanceBuffer		= nullptr;
+	mLightBuffer		= nullptr;
+	
 	mBox = new GeometryBox( XMFLOAT3( 0.0f, 0.0f, 0.0f ), 2.0f, 2.0f, 2.0f );
 
 	mRotation = 0.0f;

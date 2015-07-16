@@ -13,8 +13,12 @@ class Level
 		ID3D11Device*					mDevice;
 		ID3D11DeviceContext*			mDeviceContext;
 		std::vector<PerInstanceData>	mInstanceData;
+		std::vector<PointLightData>		mPointLightData;
 		ID3D11Buffer*					mObjectVertexBuffer;
 		ID3D11Buffer*					mInstanceBuffer;
+		ID3D11Buffer*					mLightBuffer;
+
+		int								mDirection;
 
 		GeometryBox*					mBox;
 		float							mRotation;
@@ -22,9 +26,11 @@ class Level
 	private:
 		HRESULT CreateVertexBuffer();
 		HRESULT CreatePerInstanceBuffer();
+		HRESULT CreateLightBuffer();
 
 		HRESULT UpdateObjectVertexBuffer();
 		HRESULT UpdatePerInstanceBuffer();
+		HRESULT UpdateLightBuffer();
 
 	public:
 		void	AddBox( XMFLOAT3 scale, XMFLOAT3 rotation, XMFLOAT3 translation, XMFLOAT3 color );
