@@ -14,7 +14,6 @@ GeometryBox::GeometryBox( XMFLOAT3 origin, float width, float height, float dept
 	mIsVisible	= true;
 	mVertexFaces = new Vertex32[36];
 	XMStoreFloat4x4( &mPerInstanceData.world,  XMMatrixTranspose( XMMatrixIdentity() ) );
-	//mPerInstanceData.color = XMFLOAT4( 0.18f, 0.36f, 0.54f, 1.0f );
 	mPerInstanceData.color = XMFLOAT4( 1.0f, 0.0f, 0.0f, 1.0f );
 
 	/*
@@ -86,6 +85,44 @@ GeometryBox::GeometryBox( XMFLOAT3 origin, float width, float height, float dept
 	v7.position.y = origin.y - halfHeight;
 	v7.position.z = origin.z - halfDepth;
 
+	///////====== TEST UV-COORD ========
+
+	//// Vertex 8
+	//Vertex32 v8;
+	//// Vertex 9
+	//Vertex32 v9;
+	//// Vertex 10
+	//Vertex32 v10;
+	//// Vertex 11
+	//Vertex32 v11;
+	//// Vertex 12
+	//Vertex32 v12;
+	//// Vertex 13
+	//Vertex32 v13;
+	//// Vertex 14
+	//Vertex32 v14;
+	//// Vertex 15
+	//Vertex32 v15;
+	//// Vertex 16
+	//Vertex32 v16;
+	//// Vertex 17
+	//Vertex32 v17;
+	//// Vertex 18
+	//Vertex32 v18;
+	//// Vertex 19
+	//Vertex32 v19;
+	//// Vertex 20
+	//Vertex32 v20;
+	//// Vertex 21
+	//Vertex32 v21;
+	//// Vertex 22
+	//Vertex32 v22;
+	//// Vertex 23
+	//Vertex32 v23;
+
+
+	///////=============================
+
 	// Front face
 	mVertexFaces[0] = v2;
 	mVertexFaces[1] = v3;
@@ -150,63 +187,63 @@ GeometryBox::GeometryBox( XMFLOAT3 origin, float width, float height, float dept
 	//---------------------
 
 	// Front face
-	mVertexFaces[0].normal = XMFLOAT3( 0.0f, 0.0f, -1.0f ); 
-	mVertexFaces[1].normal = XMFLOAT3( 0.0f, 0.0f, -1.0f ); 
-	mVertexFaces[2].normal = XMFLOAT3( 0.0f, 0.0f, -1.0f ); 
+	mVertexFaces[0].normal = XMFLOAT3( 0.0f, 0.0f, -1.0f );		mVertexFaces[0].texCoord = XMFLOAT2( 0.0f, 0.0f );
+	mVertexFaces[1].normal = XMFLOAT3( 0.0f, 0.0f, -1.0f );		mVertexFaces[1].texCoord = XMFLOAT2( 1.0f, 0.0f );
+	mVertexFaces[2].normal = XMFLOAT3( 0.0f, 0.0f, -1.0f );		mVertexFaces[2].texCoord = XMFLOAT2( 0.0f, 1.0f );
 
-	mVertexFaces[3].normal = XMFLOAT3( 0.0f, 0.0f, -1.0f ); 
-	mVertexFaces[4].normal = XMFLOAT3( 0.0f, 0.0f, -1.0f ); 
-	mVertexFaces[5].normal = XMFLOAT3( 0.0f, 0.0f, -1.0f ); 
+	mVertexFaces[3].normal = XMFLOAT3( 0.0f, 0.0f, -1.0f );		mVertexFaces[3].texCoord = XMFLOAT2( 1.0f, 0.0f );
+	mVertexFaces[4].normal = XMFLOAT3( 0.0f, 0.0f, -1.0f );		mVertexFaces[4].texCoord = XMFLOAT2( 1.0f, 1.0f );
+	mVertexFaces[5].normal = XMFLOAT3( 0.0f, 0.0f, -1.0f );		mVertexFaces[5].texCoord = XMFLOAT2( 0.0f, 1.0f );
 
 
 	// Back face
-	mVertexFaces[6].normal = XMFLOAT3( 0.0f, 0.0f, 1.0f ); 
-	mVertexFaces[7].normal = XMFLOAT3( 0.0f, 0.0f, 1.0f ); 
-	mVertexFaces[8].normal = XMFLOAT3( 0.0f, 0.0f, 1.0f ); 
+	mVertexFaces[6].normal = XMFLOAT3( 0.0f, 0.0f, 1.0f );		mVertexFaces[6].texCoord = XMFLOAT2( 0.0f, 0.0f );
+	mVertexFaces[7].normal = XMFLOAT3( 0.0f, 0.0f, 1.0f ); 		mVertexFaces[7].texCoord = XMFLOAT2( 1.0f, 0.0f );
+	mVertexFaces[8].normal = XMFLOAT3( 0.0f, 0.0f, 1.0f ); 		mVertexFaces[8].texCoord = XMFLOAT2( 0.0f, 1.0f );
 				    
-	mVertexFaces[9].normal  = XMFLOAT3( 0.0f, 0.0f, 1.0f ); 
-	mVertexFaces[10].normal = XMFLOAT3( 0.0f, 0.0f, 1.0f ); 
-	mVertexFaces[11].normal = XMFLOAT3( 0.0f, 0.0f, 1.0f ); 
+	mVertexFaces[9].normal  = XMFLOAT3( 0.0f, 0.0f, 1.0f ); 	mVertexFaces[9].texCoord =  XMFLOAT2( 1.0f, 0.0f );
+	mVertexFaces[10].normal = XMFLOAT3( 0.0f, 0.0f, 1.0f ); 	mVertexFaces[10].texCoord = XMFLOAT2( 1.0f, 1.0f );
+	mVertexFaces[11].normal = XMFLOAT3( 0.0f, 0.0f, 1.0f ); 	mVertexFaces[11].texCoord = XMFLOAT2( 0.0f, 1.0f );
 
 
 	// Left face
-	mVertexFaces[12].normal = XMFLOAT3( -1.0f, 0.0f, 0.0f ); 
-	mVertexFaces[13].normal = XMFLOAT3( -1.0f, 0.0f, 0.0f ); 
-	mVertexFaces[14].normal = XMFLOAT3( -1.0f, 0.0f, 0.0f ); 
+	mVertexFaces[12].normal = XMFLOAT3( -1.0f, 0.0f, 0.0f );	mVertexFaces[12].texCoord = XMFLOAT2( 0.0f, 0.0f ); 
+	mVertexFaces[13].normal = XMFLOAT3( -1.0f, 0.0f, 0.0f ); 	mVertexFaces[13].texCoord = XMFLOAT2( 1.0f, 0.0f );
+	mVertexFaces[14].normal = XMFLOAT3( -1.0f, 0.0f, 0.0f ); 	mVertexFaces[14].texCoord = XMFLOAT2( 0.0f, 1.0f );
 
-	mVertexFaces[15].normal = XMFLOAT3( -1.0f, 0.0f, 0.0f ); 
-	mVertexFaces[16].normal = XMFLOAT3( -1.0f, 0.0f, 0.0f ); 
-	mVertexFaces[17].normal = XMFLOAT3( -1.0f, 0.0f, 0.0f ); 
+	mVertexFaces[15].normal = XMFLOAT3( -1.0f, 0.0f, 0.0f ); 	mVertexFaces[15].texCoord = XMFLOAT2( 1.0f, 0.0f );
+	mVertexFaces[16].normal = XMFLOAT3( -1.0f, 0.0f, 0.0f ); 	mVertexFaces[16].texCoord = XMFLOAT2( 1.0f, 1.0f );
+	mVertexFaces[17].normal = XMFLOAT3( -1.0f, 0.0f, 0.0f ); 	mVertexFaces[17].texCoord = XMFLOAT2( 0.0f, 1.0f );
 
 
 	// Right face
-	mVertexFaces[18].normal = XMFLOAT3( 1.0f, 0.0f, 0.0f );
-	mVertexFaces[19].normal = XMFLOAT3( 1.0f, 0.0f, 0.0f );
-	mVertexFaces[20].normal = XMFLOAT3( 1.0f, 0.0f, 0.0f );
+	mVertexFaces[18].normal = XMFLOAT3( 1.0f, 0.0f, 0.0f );		mVertexFaces[18].texCoord = XMFLOAT2( 0.0f, 0.0f );	
+	mVertexFaces[19].normal = XMFLOAT3( 1.0f, 0.0f, 0.0f );		mVertexFaces[19].texCoord = XMFLOAT2( 1.0f, 0.0f );
+	mVertexFaces[20].normal = XMFLOAT3( 1.0f, 0.0f, 0.0f );		mVertexFaces[20].texCoord = XMFLOAT2( 0.0f, 1.0f );
 
-	mVertexFaces[21].normal = XMFLOAT3( 1.0f, 0.0f, 0.0f );
-	mVertexFaces[22].normal = XMFLOAT3( 1.0f, 0.0f, 0.0f );
-	mVertexFaces[23].normal = XMFLOAT3( 1.0f, 0.0f, 0.0f );
+	mVertexFaces[21].normal = XMFLOAT3( 1.0f, 0.0f, 0.0f );		mVertexFaces[21].texCoord = XMFLOAT2( 1.0f, 0.0f );
+	mVertexFaces[22].normal = XMFLOAT3( 1.0f, 0.0f, 0.0f );		mVertexFaces[22].texCoord = XMFLOAT2( 1.0f, 1.0f );
+	mVertexFaces[23].normal = XMFLOAT3( 1.0f, 0.0f, 0.0f );		mVertexFaces[23].texCoord = XMFLOAT2( 0.0f, 1.0f );
 
 
 	// Top face
-	mVertexFaces[24].normal = XMFLOAT3( 0.0f, 1.0f, 0.0f );
-	mVertexFaces[25].normal = XMFLOAT3( 0.0f, 1.0f, 0.0f );
-	mVertexFaces[26].normal = XMFLOAT3( 0.0f, 1.0f, 0.0f );
+	mVertexFaces[24].normal = XMFLOAT3( 0.0f, 1.0f, 0.0f );		mVertexFaces[24].texCoord = XMFLOAT2( 0.0f, 0.0f );
+	mVertexFaces[25].normal = XMFLOAT3( 0.0f, 1.0f, 0.0f );		mVertexFaces[25].texCoord = XMFLOAT2( 1.0f, 0.0f );
+	mVertexFaces[26].normal = XMFLOAT3( 0.0f, 1.0f, 0.0f );		mVertexFaces[26].texCoord = XMFLOAT2( 0.0f, 1.0f );
 										
-	mVertexFaces[27].normal = XMFLOAT3( 0.0f, 1.0f, 0.0f );
-	mVertexFaces[28].normal = XMFLOAT3( 0.0f, 1.0f, 0.0f );
-	mVertexFaces[29].normal = XMFLOAT3( 0.0f, 1.0f, 0.0f );
+	mVertexFaces[27].normal = XMFLOAT3( 0.0f, 1.0f, 0.0f );		mVertexFaces[27].texCoord = XMFLOAT2( 1.0f, 0.0f );
+	mVertexFaces[28].normal = XMFLOAT3( 0.0f, 1.0f, 0.0f );		mVertexFaces[28].texCoord = XMFLOAT2( 1.0f, 1.0f );
+	mVertexFaces[29].normal = XMFLOAT3( 0.0f, 1.0f, 0.0f );		mVertexFaces[29].texCoord = XMFLOAT2( 0.0f, 1.0f );
 
 
 	// Bottom face
-	mVertexFaces[30].normal = XMFLOAT3( 0.0f, -1.0f, 0.0f );
-	mVertexFaces[31].normal = XMFLOAT3( 0.0f, -1.0f, 0.0f );
-	mVertexFaces[32].normal = XMFLOAT3( 0.0f, -1.0f, 0.0f );
+	mVertexFaces[30].normal = XMFLOAT3( 0.0f, -1.0f, 0.0f );	mVertexFaces[30].texCoord = XMFLOAT2( 0.0f, 0.0f );
+	mVertexFaces[31].normal = XMFLOAT3( 0.0f, -1.0f, 0.0f );	mVertexFaces[31].texCoord = XMFLOAT2( 1.0f, 0.0f );
+	mVertexFaces[32].normal = XMFLOAT3( 0.0f, -1.0f, 0.0f );	mVertexFaces[32].texCoord = XMFLOAT2( 0.0f, 1.0f );
 											  
-	mVertexFaces[33].normal = XMFLOAT3( 0.0f, -1.0f, 0.0f );
-	mVertexFaces[34].normal = XMFLOAT3( 0.0f, -1.0f, 0.0f );
-	mVertexFaces[35].normal = XMFLOAT3( 0.0f, -1.0f, 0.0f );
+	mVertexFaces[33].normal = XMFLOAT3( 0.0f, -1.0f, 0.0f );	mVertexFaces[33].texCoord = XMFLOAT2( 1.0f, 0.0f );
+	mVertexFaces[34].normal = XMFLOAT3( 0.0f, -1.0f, 0.0f );	mVertexFaces[34].texCoord = XMFLOAT2( 1.0f, 1.0f );
+	mVertexFaces[35].normal = XMFLOAT3( 0.0f, -1.0f, 0.0f );	mVertexFaces[35].texCoord = XMFLOAT2( 0.0f, 1.0f );
 }
 
 GeometryBox::~GeometryBox()

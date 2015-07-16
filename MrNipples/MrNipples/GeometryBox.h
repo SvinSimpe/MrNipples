@@ -7,6 +7,7 @@ struct Vertex32
 {
 	XMFLOAT3 position;
 	XMFLOAT3 normal;
+	XMFLOAT2 texCoord;
 };
 
 class GeometryBox

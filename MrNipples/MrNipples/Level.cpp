@@ -87,17 +87,17 @@ HRESULT Level::UpdateLightBuffer()
 {
 	HRESULT hr = S_OK;
 		
-	float zMin = -5.0f;
-	float zMax = 1000.0f;
+	float zMin = -50.0f;
+	float zMax = 500.0f;
 
 	if( mPointLightData.at(0).positionAndRadius.z < zMax && mDirection == 1 )
-		mPointLightData.at(0).positionAndRadius.z += 0.02f;
+		mPointLightData.at(0).positionAndRadius.z += 0.0005f;
 
 	if( mPointLightData.at(0).positionAndRadius.z > zMax )
 		mDirection = 0;
 
 	if( mPointLightData.at(0).positionAndRadius.z > zMin && mDirection == 0 )
-		mPointLightData.at(0).positionAndRadius.z -= 0.02f;
+		mPointLightData.at(0).positionAndRadius.z -= 0.0005f;
 
 	if( mPointLightData.at(0).positionAndRadius.z < zMin )
 		mDirection = 1;
@@ -171,6 +171,10 @@ void Level::Update( float deltaTime )
 
 void Level::Render( float deltaTime )
 {
+	// Texture
+	mDeviceContext->PSSetSamplers( 0, 1, &mSamplerState );
+	mDeviceContext->PSSetShaderResources( 0, 1, &mShaderResourceView );
+
 	UINT32 stride[2]				= { sizeof(Vertex32), sizeof(PerInstanceData) };
 	UINT32 offset[2]				= { 0, 0 };
 	ID3D11Buffer* buffersToSet[2]	= { mObjectVertexBuffer, mInstanceBuffer };
@@ -184,8 +188,8 @@ HRESULT Level::Initialize( ID3D11Device* device, ID3D11DeviceContext* deviceCont
 	mDevice			= device;
 	mDeviceContext	= deviceContext;
 
-	//				GEOMETRY
-	//========================================
+					
+	//=================GEOMETRY===================
 	for ( size_t i = 0; i < 100; i++ )
 	{
 		float R = (float)(rand() % 255) * 0.00392f; // "Same" as divided by 255 but faster
@@ -197,21 +201,48 @@ HRESULT Level::Initialize( ID3D11Device* device, ID3D11DeviceContext* deviceCont
 				XMFLOAT3( 0.0f , 0.0f, (float)i * 10.0f ),
 				XMFLOAT3( R, G, B ) );
 	}
-	//========================================
+	//============================================
 
-	//				LIGHT
-	//========================================
+
+				
+	//==================LIGHT======================
 	mDirection = 1;
 
 	PointLightData light;
-	light.positionAndRadius = XMFLOAT4( -5.0f, 7.0f, 30.0f, 100.0f );
+	light.positionAndRadius = XMFLOAT4( -15.0f, 7.0f, -50.0f, 100.0f );
 	light.ambient			= XMFLOAT4( 0.0f, 0.0f, 0.0f, 1.0f );
 	light.diffuse			= XMFLOAT4( 1.0f, 1.0f, 1.0f, 1.0f );
 	light.specular			= XMFLOAT4( 1.0f, 1.0f, 1.0f, 1.0f );
 	light.attenuation		= XMFLOAT3( 0.0f, 0.02f, 0.0f );
 
 	mPointLightData.push_back( light );
-	//========================================
+	//=============================================
+
+
+					
+	//==================TEXTURE======================
+	if( FAILED( CreateDDSTextureFromFile( mDevice , L"Textures/cobble.DDS", (ID3D11Resource**)&mCrateTexture, nullptr ) ) )
+		return E_FAIL;
+
+	D3D11_SAMPLER_DESC saD;
+	memset( &saD, 0, sizeof( saD ) );
+	saD.Filter			= D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+	saD.AddressU		= D3D11_TEXTURE_ADDRESS_WRAP;
+	saD.AddressV		= D3D11_TEXTURE_ADDRESS_WRAP;
+	saD.AddressW		= D3D11_TEXTURE_ADDRESS_WRAP;
+	saD.MipLODBias		= 0.0f;
+	saD.MaxAnisotropy	= 1;
+	saD.ComparisonFunc	= D3D11_COMPARISON_NEVER;
+	saD.MaxLOD			= D3D11_FLOAT32_MAX;
+
+	if( FAILED( mDevice->CreateSamplerState( &saD, &mSamplerState ) ) )
+		return E_FAIL;
+
+	if( FAILED( mDevice->CreateShaderResourceView( mCrateTexture, nullptr, &mShaderResourceView ) ) )
+		return E_FAIL;
+	//===============================================
+
+
 
 	if( FAILED( CreateVertexBuffer() ) )
 		return E_FAIL;
@@ -232,6 +263,9 @@ Level::Level()
 	mObjectVertexBuffer	= nullptr;
 	mInstanceBuffer		= nullptr;
 	mLightBuffer		= nullptr;
+	mCrateTexture		= nullptr;
+	mShaderResourceView	= nullptr;
+	mSamplerState		= nullptr;
 	
 	mBox = new GeometryBox( XMFLOAT3( 0.0f, 0.0f, 0.0f ), 2.0f, 2.0f, 2.0f );
 
@@ -246,4 +280,11 @@ void Level::Release()
 {
 	//Remove if class does NOT have any
 	//resources to release!
+
+	SAFE_RELEASE( mObjectVertexBuffer );
+	SAFE_RELEASE( mInstanceBuffer );
+	SAFE_RELEASE( mLightBuffer );
+	SAFE_RELEASE( mCrateTexture );
+	SAFE_RELEASE( mShaderResourceView );
+	SAFE_RELEASE( mSamplerState );	
 }

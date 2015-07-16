@@ -24,19 +24,22 @@ struct VertexIn
 	// Per-vertex data
 	float3				position	: POSITION;
 	float3				normal		: NORMAL;
+	float2				texCoord	: TEXCOORD;
 	// Per-instance data
 	row_major float4x4	world		: WORLD;
 	float4				color		: COLOR;
 	uint				instanceID	: SV_InstanceID;
 };
 
-
+Texture2D		tex				: register(t0);
+SamplerState	samplerState	: register(s0);
 
 struct PixelIn
 {
 	float4 position			: SV_POSITION;
 	float3 worldPosition	: WORLD_POSITION;
 	float3 normal			: NORMAL;
+	float2 texCoord			: TEXCOORD;
 	float4 color			: COLOR;
 };
 
@@ -49,8 +52,9 @@ PixelIn VS( VertexIn input )
 	output.position			= mul( output.position, view );
 	output.position			= mul( output.position, proj );
 
-	output.normal	= normalize( mul( input.normal, (float3x3)input.world ) );
-	output.color	= input.color;
+	output.normal		= normalize( mul( input.normal, (float3x3)input.world ) );
+	output.texCoord	= input.texCoord;
+	output.color		= input.color;
 
 	return output;
 }
@@ -70,12 +74,13 @@ float4 PS( PixelIn input ) : SV_Target
 
 	//						LIGHTING
 	///====================================================
-	float3  finalDiffuse	= float3( 0.02f, 0.02f, 0.02f );
+	float3  finalDiffuse	= float3( 1.0f, 1.0f, 1.0f );
 	float3	lightVec		= pointLight.positionAndRadius.xyz - input.worldPosition;
 	float	lightVecLength	= length( lightVec );
 	
 	if( lightVecLength > pointLight.positionAndRadius.w ) 
 		return float4( finalDiffuse * input.color, 1.0f );
+
 	
 	lightVec /= lightVecLength;
 	float diffuseFactor = saturate( dot( lightVec, input.normal ) );		
@@ -84,7 +89,7 @@ float4 PS( PixelIn input ) : SV_Target
 								lightVecLength + pointLight.attenuation[2] *
 								lightVecLength * lightVecLength );
 
-	finalDiffuse	= diffuseFactor * pointLight.diffuse.xyz * input.color;/* * tex.Sample( samplerState, input.texCoord ).xyz;*/
+	finalDiffuse	= diffuseFactor * pointLight.diffuse.xyz /* * input.color;*/ * tex.Sample( samplerState, input.texCoord ).xyz;
 	finalDiffuse	*= finalAtt;
 
 	return float4( finalDiffuse, 1.0f );

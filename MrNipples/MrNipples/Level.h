@@ -3,6 +3,7 @@
 
 #include "3DLibs.h"
 #include "GeometryBox.h"
+#include "DDSTextureLoader.h"
 
 		const unsigned int			MAX_NUM_OF_OBJECTS			= 200;
 		const unsigned int			NUM_VERTICES_PER_OBJECT		= 36;
@@ -18,6 +19,12 @@ class Level
 		ID3D11Buffer*					mInstanceBuffer;
 		ID3D11Buffer*					mLightBuffer;
 
+		//TEST
+		ID3D11Texture2D*				mCrateTexture;
+		ID3D11ShaderResourceView*		mShaderResourceView;
+		ID3D11SamplerState*				mSamplerState;
+
+		// TEMPORARY FOR MOVING LIGHT!
 		int								mDirection;
 
 		GeometryBox*					mBox;
