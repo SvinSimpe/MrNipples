@@ -91,13 +91,13 @@ HRESULT Level::UpdateLightBuffer()
 	float zMax = 500.0f;
 
 	if( mPointLightData.at(0).positionAndRadius.z < zMax && mDirection == 1 )
-		mPointLightData.at(0).positionAndRadius.z += 0.0005f;
+		mPointLightData.at(0).positionAndRadius.z += 0.005f;
 
 	if( mPointLightData.at(0).positionAndRadius.z > zMax )
 		mDirection = 0;
 
 	if( mPointLightData.at(0).positionAndRadius.z > zMin && mDirection == 0 )
-		mPointLightData.at(0).positionAndRadius.z -= 0.0005f;
+		mPointLightData.at(0).positionAndRadius.z -= 0.005f;
 
 	if( mPointLightData.at(0).positionAndRadius.z < zMin )
 		mDirection = 1;
@@ -221,7 +221,9 @@ HRESULT Level::Initialize( ID3D11Device* device, ID3D11DeviceContext* deviceCont
 
 					
 	//==================TEXTURE======================
-	if( FAILED( CreateDDSTextureFromFile( mDevice , L"Textures/cobble.DDS", (ID3D11Resource**)&mCrateTexture, nullptr ) ) )
+	ID3D11Texture2D* crateTexture = nullptr;
+		
+	if( FAILED( CreateDDSTextureFromFile( mDevice , L"Textures/cobble.DDS", (ID3D11Resource**)&crateTexture, nullptr ) ) )
 		return E_FAIL;
 
 	D3D11_SAMPLER_DESC saD;
@@ -238,8 +240,10 @@ HRESULT Level::Initialize( ID3D11Device* device, ID3D11DeviceContext* deviceCont
 	if( FAILED( mDevice->CreateSamplerState( &saD, &mSamplerState ) ) )
 		return E_FAIL;
 
-	if( FAILED( mDevice->CreateShaderResourceView( mCrateTexture, nullptr, &mShaderResourceView ) ) )
+	if( FAILED( mDevice->CreateShaderResourceView( crateTexture, nullptr, &mShaderResourceView ) ) )
 		return E_FAIL;
+
+	SAFE_RELEASE( crateTexture );
 	//===============================================
 
 
@@ -263,7 +267,6 @@ Level::Level()
 	mObjectVertexBuffer	= nullptr;
 	mInstanceBuffer		= nullptr;
 	mLightBuffer		= nullptr;
-	mCrateTexture		= nullptr;
 	mShaderResourceView	= nullptr;
 	mSamplerState		= nullptr;
 	
@@ -284,7 +287,6 @@ void Level::Release()
 	SAFE_RELEASE( mObjectVertexBuffer );
 	SAFE_RELEASE( mInstanceBuffer );
 	SAFE_RELEASE( mLightBuffer );
-	SAFE_RELEASE( mCrateTexture );
 	SAFE_RELEASE( mShaderResourceView );
 	SAFE_RELEASE( mSamplerState );	
 }

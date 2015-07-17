@@ -15,6 +15,8 @@ class Game
 		ID3D11RasterizerState*		mCurrentRasterizerState;
 		ID3D11InputLayout*			mInputLayoutInstanced;
 		ID3D11VertexShader*			mVertexShader;
+		ID3D11HullShader*			mHullShader;
+		ID3D11DomainShader*			mDomainShader;
 		ID3D11PixelShader*			mPixelShader;
 		ID3D11Buffer*				mPerFrameCBuffer;
 		PerFrameData				mPerFrameData;

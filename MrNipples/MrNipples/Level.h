@@ -20,7 +20,6 @@ class Level
 		ID3D11Buffer*					mLightBuffer;
 
 		//TEST
-		ID3D11Texture2D*				mCrateTexture;
 		ID3D11ShaderResourceView*		mShaderResourceView;
 		ID3D11SamplerState*				mSamplerState;
 

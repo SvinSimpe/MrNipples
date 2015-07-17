@@ -80,7 +80,34 @@ HRESULT Game::InitializeBasicShaders()
 		vs->Release();
 	}
 
+	//----------------------
+	// Compile Hull Shader |
+	//----------------------
+	ID3DBlob* ths = nullptr;
 
+	if( SUCCEEDED( hr = CompileShader( "SimpleShader.hlsl", "HS", "hs_5_0", nullptr, &ths ) ) )
+	{
+		hr = mDevice->CreateHullShader(  ths->GetBufferPointer(),
+										  ths->GetBufferSize(),
+										  nullptr,
+										  &mHullShader );
+		ths->Release();
+	}
+
+
+	//------------------------
+	// Compile Domain Shader |
+	//------------------------
+	ID3DBlob* tds = nullptr;
+
+	if( SUCCEEDED( hr = CompileShader( "SimpleShader.hlsl", "DS", "ds_5_0", nullptr, &tds ) ) )
+	{
+		hr = mDevice->CreateDomainShader(  tds->GetBufferPointer(),
+											tds->GetBufferSize(),
+											nullptr,
+											&mDomainShader );
+		tds->Release();
+	}
 
 	//-----------------------
 	// Compile Pixel Shader |
@@ -167,6 +194,8 @@ HRESULT hr = S_OK;
 		// Set constant buffer to shader stages
 		mDeviceContext->VSSetConstantBuffers( 0, 1, &mPerFrameCBuffer );
 		mDeviceContext->PSSetConstantBuffers( 0, 1, &mPerFrameCBuffer );
+		mDeviceContext->HSSetConstantBuffers( 0, 1, &mPerFrameCBuffer );
+		mDeviceContext->DSSetConstantBuffers( 0, 1, &mPerFrameCBuffer );
 	}
 
 	return hr;
@@ -199,14 +228,15 @@ void Game::Render( float deltaTime )
 	mDeviceContext->IASetInputLayout( mInputLayoutInstanced );
 
 	// Set topology
-	mDeviceContext->IASetPrimitiveTopology( D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	mDeviceContext->IASetPrimitiveTopology( D3D11_PRIMITIVE_TOPOLOGY_3_CONTROL_POINT_PATCHLIST );
+	//mDeviceContext->IASetPrimitiveTopology( D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	//mDeviceContext->IASetPrimitiveTopology( D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
 
 
 	//Set shader stages
 	mDeviceContext->VSSetShader( mVertexShader, nullptr, 0 );
-	mDeviceContext->HSSetShader( nullptr, nullptr, 0 );
-	mDeviceContext->DSSetShader( nullptr, nullptr, 0 );
+	mDeviceContext->HSSetShader( mHullShader, nullptr, 0 );
+	mDeviceContext->DSSetShader( mDomainShader, nullptr, 0 );
 	mDeviceContext->GSSetShader( nullptr, nullptr, 0 );
 	mDeviceContext->PSSetShader( mPixelShader, nullptr, 0 );
 
@@ -246,6 +276,8 @@ Game::Game()
 	mCurrentRasterizerState		= nullptr;	
 	mInputLayoutInstanced		= nullptr;
 	mVertexShader				= nullptr;
+	mHullShader					= nullptr;
+	mDomainShader				= nullptr;
 	mPixelShader				= nullptr;
 
 	mLevel	= nullptr;
@@ -262,6 +294,8 @@ void Game::Release()
 	SAFE_RELEASE( mRasterizerStateWired );
 	SAFE_RELEASE( mInputLayoutInstanced );
 	SAFE_RELEASE( mVertexShader );
+	SAFE_RELEASE( mHullShader );
+	SAFE_RELEASE( mDomainShader );
 	SAFE_RELEASE( mPixelShader );
 
 

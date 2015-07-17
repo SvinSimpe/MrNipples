@@ -66,5 +66,8 @@
     <Image Include="Textures\woodCrate.dds">
       <Filter>Textures</Filter>
     </Image>
+    <Image Include="Textures\cobble.dds">
+      <Filter>Textures</Filter>
+    </Image>
   </ItemGroup>
 </Project>
