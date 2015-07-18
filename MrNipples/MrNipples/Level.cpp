@@ -5,8 +5,8 @@ HRESULT Level::CreateVertexBuffer()
 	HRESULT hr = S_OK;
 
 	D3D11_BUFFER_DESC vbd;
-	vbd.ByteWidth			= sizeof(Vertex32) * NUM_VERTICES_PER_OBJECT;
-	vbd.StructureByteStride = sizeof(Vertex32);
+	vbd.ByteWidth			= sizeof(Vertex48) * NUM_VERTICES_PER_OBJECT;
+	vbd.StructureByteStride = sizeof(Vertex48);
 	vbd.Usage				= D3D11_USAGE_IMMUTABLE;
 	vbd.BindFlags			= D3D11_BIND_VERTEX_BUFFER;
 	vbd.CPUAccessFlags		= 0;
@@ -86,7 +86,7 @@ HRESULT Level::UpdatePerInstanceBuffer()
 HRESULT Level::UpdateLightBuffer()
 {
 	HRESULT hr = S_OK;
-		
+	
 	float zMin = -50.0f;
 	float zMax = 500.0f;
 
@@ -171,11 +171,20 @@ void Level::Update( float deltaTime )
 
 void Level::Render( float deltaTime )
 {
-	// Texture
-	mDeviceContext->PSSetSamplers( 0, 1, &mSamplerState );
-	mDeviceContext->PSSetShaderResources( 0, 1, &mShaderResourceView );
+	//=============Textures=============
 
-	UINT32 stride[2]				= { sizeof(Vertex32), sizeof(PerInstanceData) };
+	//--------------Brick---------------
+	mDeviceContext->DSSetShaderResources( 0, 1, &mBrickTextureData.displacementMap );
+	mDeviceContext->DSSetSamplers( 0, 1, &mSamplerState );
+	ID3D11ShaderResourceView* pixelViews[3] = { mBrickTextureData.colorMap, mBrickTextureData.specularMap, mBrickTextureData.normalMap };
+	mDeviceContext->PSSetShaderResources( 1, 3, pixelViews );
+	
+	//----------------------------------
+
+	mDeviceContext->PSSetSamplers( 0, 1, &mSamplerState );
+	//mDeviceContext->PSSetShaderResources( 0, 1, &mShaderResourceView );
+
+	UINT32 stride[2]				= { sizeof(Vertex48), sizeof(PerInstanceData) };
 	UINT32 offset[2]				= { 0, 0 };
 	ID3D11Buffer* buffersToSet[2]	= { mObjectVertexBuffer, mInstanceBuffer };
 	mDeviceContext->IASetVertexBuffers( 0, 2, buffersToSet, stride, offset );
@@ -209,9 +218,9 @@ HRESULT Level::Initialize( ID3D11Device* device, ID3D11DeviceContext* deviceCont
 	mDirection = 1;
 
 	PointLightData light;
-	light.positionAndRadius = XMFLOAT4( -15.0f, 7.0f, -50.0f, 100.0f );
+	light.positionAndRadius = XMFLOAT4( -40.0f, 20.0f, 0.0f, 350.0f );
 	light.ambient			= XMFLOAT4( 0.0f, 0.0f, 0.0f, 1.0f );
-	light.diffuse			= XMFLOAT4( 1.0f, 1.0f, 1.0f, 1.0f );
+	light.diffuse			= XMFLOAT4( 0.85f, 0.85f, 1.0f, 1.0f );
 	light.specular			= XMFLOAT4( 1.0f, 1.0f, 1.0f, 1.0f );
 	light.attenuation		= XMFLOAT3( 0.0f, 0.02f, 0.0f );
 
@@ -221,6 +230,34 @@ HRESULT Level::Initialize( ID3D11Device* device, ID3D11DeviceContext* deviceCont
 
 					
 	//==================TEXTURE======================
+
+	//------------------BRICK----------------------
+	ID3D11Texture2D* tempTexture = nullptr;
+
+	// COLOR-------------------------------------------------------------------------------------------------------------
+	if( FAILED( CreateDDSTextureFromFile( mDevice , L"Textures/Cobble/cobbleTexture_COLOR.DDS", (ID3D11Resource**)&tempTexture, nullptr ) ) )
+		return E_FAIL;
+	if( FAILED( mDevice->CreateShaderResourceView( tempTexture, nullptr, &mBrickTextureData.colorMap ) ) )
+		return E_FAIL;
+	// SPECULAR----------------------------------------------------------------------------------------------------------
+	if( FAILED( CreateDDSTextureFromFile( mDevice , L"Textures/Cobble/cobbleTexture_SPEC.DDS", (ID3D11Resource**)&tempTexture, nullptr ) ) )
+		return E_FAIL;
+	if( FAILED( mDevice->CreateShaderResourceView( tempTexture, nullptr, &mBrickTextureData.specularMap ) ) )
+		return E_FAIL;
+	// NORMAL------------------------------------------------------------------------------------------------------------
+	if( FAILED( CreateDDSTextureFromFile( mDevice , L"Textures/Cobble/cobbleTexture_NRM.DDS", (ID3D11Resource**)&tempTexture, nullptr ) ) )
+		return E_FAIL;
+	if( FAILED( mDevice->CreateShaderResourceView( tempTexture, nullptr, &mBrickTextureData.normalMap ) ) )
+		return E_FAIL;
+	// DISPLACEMENT------------------------------------------------------------------------------------------------------
+	if( FAILED( CreateDDSTextureFromFile( mDevice , L"Textures/Cobble/cobbleTexture2_DISP.DDS", (ID3D11Resource**)&tempTexture, nullptr ) ) )
+		return E_FAIL;
+	if( FAILED( mDevice->CreateShaderResourceView( tempTexture, nullptr, &mBrickTextureData.displacementMap ) ) )
+		return E_FAIL;
+	//-------------------------------------------------------------------------------------------------------------------
+
+
+
 	ID3D11Texture2D* crateTexture = nullptr;
 		
 	if( FAILED( CreateDDSTextureFromFile( mDevice , L"Textures/cobble.DDS", (ID3D11Resource**)&crateTexture, nullptr ) ) )
@@ -287,6 +324,12 @@ void Level::Release()
 	SAFE_RELEASE( mObjectVertexBuffer );
 	SAFE_RELEASE( mInstanceBuffer );
 	SAFE_RELEASE( mLightBuffer );
+
+	SAFE_RELEASE( mBrickTextureData.colorMap );
+	SAFE_RELEASE( mBrickTextureData.specularMap );
+	SAFE_RELEASE( mBrickTextureData.normalMap );
+	SAFE_RELEASE( mBrickTextureData.displacementMap );
+
 	SAFE_RELEASE( mShaderResourceView );
 	SAFE_RELEASE( mSamplerState );	
 }

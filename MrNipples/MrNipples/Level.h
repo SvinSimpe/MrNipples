@@ -19,7 +19,7 @@ class Level
 		ID3D11Buffer*					mInstanceBuffer;
 		ID3D11Buffer*					mLightBuffer;
 
-		//TEST
+		TextureData						mBrickTextureData;
 		ID3D11ShaderResourceView*		mShaderResourceView;
 		ID3D11SamplerState*				mSamplerState;
 

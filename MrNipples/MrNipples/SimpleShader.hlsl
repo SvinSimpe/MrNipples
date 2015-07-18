@@ -25,6 +25,7 @@ struct VertexIn // Pass through
 	float3				position	: POSITION;
 	float3				normal		: NORMAL;
 	float2				texCoord	: TEXCOORD;
+	float3				tangent		: TANGENT;
 	// Per-instance data
 	row_major float4x4	world		: WORLD;
 	float4				color		: COLOR;
@@ -37,6 +38,7 @@ struct VertexOut
 	float3				position	: POSITION;
 	float3				normal		: NORMAL;
 	float2				texCoord	: TEXCOORD;
+	float3				tangent		: TANGENT;
 	// Per-instance data
 	row_major float4x4	world		: WORLD;
 	float4				color		: COLOR;
@@ -50,9 +52,10 @@ struct HullConstantOut
 
 struct HullOut // Pass through
 {
-	float3 position			: POSITION;
-	float3 normal			: NORMAL;
-	float2 texCoord			: TEX;
+	float3 position	: POSITION;
+	float3 normal	: NORMAL;
+	float2 texCoord	: TEX;
+	float3 tangent	: TANGENT;
 };
 
 struct DomainOut
@@ -61,11 +64,15 @@ struct DomainOut
 	float3 worldPosition	: WORLD_POSITION;
 	float3 normal			: NORMAL;
 	float2 texCoord			: TEXCOORD;
+	float3 tangent			: TANGENT;
 	float4 color			: COLOR;
 };
 
-Texture2D		tex				: register(t0);
-SamplerState	samplerState	: register(s0);
+Texture2D		displacementMap		: register(t0);
+Texture2D		colorMap			: register(t1);
+Texture2D		specularMap			: register(t2);
+Texture2D		normalMap			: register(t3);
+SamplerState	samplerState		: register(s0);
 
 
 //=================
@@ -78,6 +85,7 @@ VertexOut VS( VertexIn input )
 	output.position		= input.position;
 	output.normal		= input.normal;
 	output.texCoord		= input.texCoord;
+	output.tangent		= input.tangent;
 	output.world		= input.world;
 	output.color		= input.color;
 	
@@ -112,9 +120,9 @@ HullConstantOut HSConstant( InputPatch<VertexOut, 3> patch, uint pid : SV_Primit
 	// Tessellate the patch based on distance from the eye such that
 	// the tessellation is 0 if d >= d1 and 60 if d <= d0.  The interval
 	// [d0, d1] defines the range we tessellate in.
-	const float d1 = 500.0f;
+	const float d1 = 250.0f;
 	const float d0 = 10.0f;
-	float tess = 8*saturate( ( d1-d ) / ( d1-d0 ) );
+	float tess = 16*saturate( ( d1-d ) / ( d1-d0 ) );
 
 	// Tessellation rate/speed
 	if( tess <= 1.0f)
@@ -144,6 +152,7 @@ VertexOut HS( InputPatch<VertexOut, 3> inputPatch, uint cpid : SV_OutputControlP
 	output.position	= inputPatch[cpid].position;
 	output.normal	= inputPatch[cpid].normal;
 	output.texCoord	= inputPatch[cpid].texCoord;
+	output.tangent	= inputPatch[cpid].tangent;
 	output.world	= inputPatch[cpid].world;
 	output.color	= inputPatch[cpid].color;
 
@@ -159,27 +168,35 @@ DomainOut DS( HullConstantOut input, float3 baryCoords : SV_DomainLocation, cons
 {
     DomainOut output = (DomainOut)0;
    
+	// Interpolate world space position with barycentric coordinates
 	float3 worldPosition	= baryCoords.x * tri[0].position + baryCoords.y * tri[1].position + baryCoords.z * tri[2].position;
 	
-	// Displacement here
-	
-
-	output.position			= mul( float4( worldPosition, 1.0f ), tri[0].world );
-	output.worldPosition	= output.position.xyz;
-	output.position			= mul( output.position, view );
-	output.position			= mul( output.position, proj );
-	output.color			= float4( 0.93f, 0.82f, 0.47f, 1.0f );
-    output.color			= float4( baryCoords.yx, 1-baryCoords.x, 1 );
-	
-
 	// Normal
 	float3 finalNormal = baryCoords.x * tri[0].normal + baryCoords.y * tri[1].normal + baryCoords.z * tri[2].normal;
-	output.normal = mul( float4( finalNormal, 0 ), tri[0].world ).xyz;
-
+	output.normal = normalize( mul( float4( finalNormal, 0 ), tri[0].world ).xyz );
 
 	// Texture coordinate
 	float2 finalTex = baryCoords.x * tri[0].texCoord + baryCoords.y * tri[1].texCoord + baryCoords.z * tri[2].texCoord;
 	output.texCoord = finalTex;
+
+	// sample the displacement map for the magnitude of displacement
+	float displacement = displacementMap.SampleLevel( samplerState, output.texCoord.xy, 0 ).r;
+
+	displacement *= 0.058f;
+
+
+	float3 direction = finalNormal; // direction is opposite normal
+
+	// translate the position
+	worldPosition += direction * displacement;
+
+	// transform to clip space
+	output.position			= mul( float4( worldPosition, 1.0f ), tri[0].world );
+	output.worldPosition	= output.position.xyz;
+	output.position			= mul( output.position, view );
+	output.position			= mul( output.position, proj );
+	output.tangent			= tri[0].tangent;
+	output.color			= tri[0].color;
     
     return output;    
 }
@@ -192,15 +209,16 @@ DomainOut DS( HullConstantOut input, float3 baryCoords : SV_DomainLocation, cons
 float4 PS( DomainOut input ) : SV_Target
 {
 
-	//////////////////////////////////////////////////////////
-	/*	IF LIGHTING SEEMS INCORRECT, CONSIDER THE NORMAL
-		CALCULATION WHEN OBJECT IS TRANSFORMED. SEE p.277
-		IN FRANK D. LUNA ( INVERSE TRANSPOSE )				*/
-	//////////////////////////////////////////////////////////
+	// Calculate Binormal
+	float3 binormal = cross( input.normal, input.tangent );
 
-	//return float4( input.normal, 1.0f );
+	// Get the normal
+	float3 sampledNormal = 2 * normalMap.Sample( samplerState, input.texCoord ).xyz - 1;
+	float3 normal = normalize( input.normal + ( sampledNormal.x * input.tangent ) + ( sampledNormal.y * binormal ) );
 
-	//return float4( input.color );
+
+	//return float4( normal, 1.0f );
+
 
 
 	//						LIGHTING
@@ -209,20 +227,26 @@ float4 PS( DomainOut input ) : SV_Target
 	float3	lightVec		= pointLight.positionAndRadius.xyz - input.worldPosition;
 	float	lightVecLength	= length( lightVec );
 	
-	if( lightVecLength > pointLight.positionAndRadius.w ) 
-		return float4( finalDiffuse * input.color.xyz, 1.0f );
+	if( lightVecLength > pointLight.positionAndRadius.w )
+		return float4( finalDiffuse * colorMap.Sample( samplerState, input.texCoord ).xyz, 1.0f );
+		
 
 	
 	lightVec /= lightVecLength;
-	float diffuseFactor = saturate( dot( lightVec, input.normal ) );		
+	float diffuseFactor = saturate( dot( lightVec, normal ) );		
 
 	float finalAtt	= 1.0f / (	pointLight.attenuation[0] + pointLight.attenuation[1] *
 								lightVecLength + pointLight.attenuation[2] *
 								lightVecLength * lightVecLength );
 
-	finalDiffuse	= diffuseFactor * pointLight.diffuse.xyz  /* * input.color; */ * tex.Sample( samplerState, input.texCoord ).xyz;
+	finalDiffuse	= diffuseFactor * pointLight.diffuse.xyz  /* * input.color; */ * colorMap.Sample( samplerState, input.texCoord ).xyz;
 	finalDiffuse	*= finalAtt;
 
-	return float4( finalDiffuse, 1.0f );
+	float4 finalSpecular = float4( finalDiffuse * specularMap.Sample( samplerState, input.texCoord ).xyz, 1.0f );
+
+	if( finalDiffuse.x < 0.001f )
+		finalDiffuse = float3( 0.001f, 0.001f, 0.001f );
+
+	return float4( finalDiffuse + finalSpecular.xyz , 1.0f );
 	///====================================================
 }

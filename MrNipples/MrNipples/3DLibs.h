@@ -43,6 +43,14 @@ struct PointLightData // 80 byte
 	float		padding;
 };
 
+struct TextureData
+{
+	ID3D11ShaderResourceView*	colorMap;
+	ID3D11ShaderResourceView*	specularMap;
+	ID3D11ShaderResourceView*	normalMap;
+	ID3D11ShaderResourceView*	displacementMap;
+};
+
 ///---------------------------------------------------
 #endif
 

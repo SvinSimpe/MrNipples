@@ -2,8 +2,10 @@
 
 Camera::Camera()
 {
-	mEyePosition		= XMFLOAT3( -30.0f, 30.0f, -60.0f);
-	mFocusPosition		= XMFLOAT3( 0.0f, 0.0f,  180.0f );
+	//mEyePosition		= XMFLOAT3( -20.0f, 10.0f, 150.0f); // RECORD POSITION
+	//mEyePosition		= XMFLOAT3( -80.0f, 100.0f, -10.0f);
+	mEyePosition		= XMFLOAT3( -15.0f, 10.0f, 200.0f); // SCREENSHOT POSITION (FOCUS Z=190)
+	mFocusPosition		= XMFLOAT3( 0.0f, 0.0f, 190.0f );
 	mUpDirection		= XMFLOAT3( 0.0f, 1.0f,  0.0f );
 	mRightDirection		= XMFLOAT3( 1.0f, 0.0f,  0.0f );
 
@@ -13,7 +15,7 @@ Camera::Camera()
 	XMStoreFloat4x4( &mViewMatrix, tempViewMatrix );
 
 
-	XMMATRIX tempProjectionMatrix = XMMatrixPerspectiveFovLH( 0.75f, 1280.0f / 720.0f, 0.5f, 50000.0f );
+	XMMATRIX tempProjectionMatrix = XMMatrixPerspectiveFovLH( 0.75f, 1280.0f / 720.0f, 0.5f, 5000.0f );
 	XMStoreFloat4x4( &mProjectionMatrix, tempProjectionMatrix );
 }
 

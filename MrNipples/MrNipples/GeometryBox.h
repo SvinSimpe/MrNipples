@@ -3,11 +3,13 @@
 
 #include "3DLibs.h"
 
-struct Vertex32
+struct Vertex48
 {
-	XMFLOAT3 position;
-	XMFLOAT3 normal;
-	XMFLOAT2 texCoord;
+	XMFLOAT3	position;
+	XMFLOAT3	normal;
+	XMFLOAT2	texCoord;
+	XMFLOAT3	tangent;
+	float		padding;
 };
 
 class GeometryBox
@@ -15,7 +17,7 @@ class GeometryBox
 	private:
 		unsigned int	mID;
 		bool			mIsVisible;
-		Vertex32*		mVertexFaces;
+		Vertex48*		mVertexFaces;
 		PerInstanceData	mPerInstanceData;
 
 	public: 
@@ -29,7 +31,7 @@ class GeometryBox
 		unsigned int	ID() const;
 		void			IsVisible( bool isVisible );
 		bool			IsVisible() const;
-		Vertex32*		VertexFaces();
+		Vertex48*		VertexFaces();
 		PerInstanceData	PerInstanceData();
 		void			PerInstanceData( XMFLOAT4X4 data );
 
