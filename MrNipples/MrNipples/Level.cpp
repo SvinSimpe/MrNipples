@@ -5,7 +5,8 @@ HRESULT Level::CreateVertexBuffer()
 	HRESULT hr = S_OK;
 
 	D3D11_BUFFER_DESC vbd;
-	vbd.ByteWidth			= sizeof(Vertex48) * NUM_VERTICES_PER_OBJECT;
+	vbd.ByteWidth			= sizeof(Vertex48) * ( BOX_VERTEX_COUNT + PLANE_VERTEX_COUNT );
+	/*vbd.ByteWidth			= sizeof(Vertex48) * NUM_VERTICES_PER_OBJECT;*/
 	vbd.StructureByteStride = sizeof(Vertex48);
 	vbd.Usage				= D3D11_USAGE_IMMUTABLE;
 	vbd.BindFlags			= D3D11_BIND_VERTEX_BUFFER;
@@ -13,13 +14,22 @@ HRESULT Level::CreateVertexBuffer()
 	vbd.MiscFlags			= 0;
 	
 
-	///TEST
-	GeometryBox* box = new GeometryBox( XMFLOAT3( 0.0f, 0.0f, 0.0f ), 1.0f, 1.0f, 1.0f );
+
+	Vertex48* data = new Vertex48[BOX_VERTEX_COUNT + PLANE_VERTEX_COUNT];
+
+	for (size_t i = 0; i < BOX_VERTEX_COUNT; i++)
+	{
+		data[i] = mBox->VertexFaces()[i];
+	}
+	for (size_t i = BOX_VERTEX_COUNT; i < BOX_VERTEX_COUNT + PLANE_VERTEX_COUNT; i++)
+	{
+		data[i] = mPlane->VertexFaces()[i-BOX_VERTEX_COUNT];
+	}
 
 	D3D11_SUBRESOURCE_DATA vinitData;
 	vinitData.SysMemPitch		= 0;
 	vinitData.SysMemSlicePitch	= 0;
-	vinitData.pSysMem			= &box->VertexFaces()[0];
+	vinitData.pSysMem			= &data[0];
 
 	hr = mDevice->CreateBuffer( &vbd, &vinitData, &mObjectVertexBuffer );
 	
@@ -70,7 +80,19 @@ HRESULT Level::UpdateObjectVertexBuffer()
 HRESULT Level::UpdatePerInstanceBuffer()
 {
 	HRESULT hr = S_OK;
-		
+	
+	// Spinderella
+	//for (size_t i = 0; i < mInstanceData.size(); i++)
+	//{
+	//	// Construct World matrix
+	//	XMStoreFloat4x4( &mInstanceData.at(i).world,  XMMatrixScaling( 10.0f, 10.0f, 10.0f ) *
+	//									   XMMatrixRotationRollPitchYaw( XMConvertToRadians( 0.0f ),
+	//																	 XMConvertToRadians( mRotation * ( (float)i * 400 ) ),
+	//																	 XMConvertToRadians( (float)i * 10.0f ) ) *
+	//									   XMMatrixTranslation( 0.0f, 0.0f, (float)i * 17.0f ) ) ;
+	//}
+
+
 	D3D11_MAPPED_SUBRESOURCE mappedResource;
 	hr = mDeviceContext->Map( mInstanceBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource );
 	
@@ -88,7 +110,7 @@ HRESULT Level::UpdateLightBuffer()
 	HRESULT hr = S_OK;
 	
 	float zMin = -50.0f;
-	float zMax = 500.0f;
+	float zMax = 300.0f;
 
 	if( mPointLightData.at(0).positionAndRadius.z < zMax && mDirection == 1 )
 		mPointLightData.at(0).positionAndRadius.z += 0.005f;
@@ -118,7 +140,7 @@ HRESULT Level::UpdateLightBuffer()
 	return hr;
 }
 
-void Level::AddBox( XMFLOAT3 scale, XMFLOAT3 rotation, XMFLOAT3 translation, XMFLOAT3 color )
+void Level::AddGeometry( XMFLOAT3 scale, XMFLOAT3 rotation, XMFLOAT3 translation, XMFLOAT3 color )
 {
 	PerInstanceData newInstance;
 
@@ -182,14 +204,18 @@ void Level::Render( float deltaTime )
 	//----------------------------------
 
 	mDeviceContext->PSSetSamplers( 0, 1, &mSamplerState );
-	//mDeviceContext->PSSetShaderResources( 0, 1, &mShaderResourceView );
 
 	UINT32 stride[2]				= { sizeof(Vertex48), sizeof(PerInstanceData) };
 	UINT32 offset[2]				= { 0, 0 };
 	ID3D11Buffer* buffersToSet[2]	= { mObjectVertexBuffer, mInstanceBuffer };
 	mDeviceContext->IASetVertexBuffers( 0, 2, buffersToSet, stride, offset );
 
-	mDeviceContext->DrawInstanced( NUM_VERTICES_PER_OBJECT, mInstanceData.size(), 0, 0 );
+	
+	mDeviceContext->DrawInstanced( BOX_VERTEX_COUNT, mNumGeometryPerType[GeometryType::BOX], 0, 0 );
+
+	mDeviceContext->DrawInstanced( PLANE_VERTEX_COUNT, mNumGeometryPerType[GeometryType::PLANE],
+													   BOX_VERTEX_COUNT,
+													   mNumGeometryPerType[GeometryType::BOX] );
 }
 
 HRESULT Level::Initialize( ID3D11Device* device, ID3D11DeviceContext* deviceContext )
@@ -197,20 +223,44 @@ HRESULT Level::Initialize( ID3D11Device* device, ID3D11DeviceContext* deviceCont
 	mDevice			= device;
 	mDeviceContext	= deviceContext;
 
+	mBox	= new GeometryBox( XMFLOAT3( 0.0f, 0.0f, 0.0f ), 2.0f, 2.0f, 2.0f );
+	mPlane	= new GeometryPlane( XMFLOAT3( 0.0f, 0.0f, 0.0f ), 40.0f, 40.0f );
+
+	mNumGeometryPerType = new unsigned int[GeometryType::AMOUNT];
+	mNumGeometryPerType[GeometryType::BOX]		= 0;
+	mNumGeometryPerType[GeometryType::PLANE]	= 0;
 					
-	//=================GEOMETRY===================
+	//=================GEOMETRY BOX===================
 	for ( size_t i = 0; i < 100; i++ )
 	{
 		float R = (float)(rand() % 255) * 0.00392f; // "Same" as divided by 255 but faster
 		float G = (float)(rand() % 255) * 0.00392f; //
 		float B = (float)(rand() % 255) * 0.00392f;	//
 		
-		AddBox( XMFLOAT3( 10.0f, 10.0f, 10.0f ),
-				XMFLOAT3( 0.0f, 0.0f, (float)(i) * 5.0f ),
-				XMFLOAT3( 0.0f , 0.0f, (float)i * 10.0f ),
-				XMFLOAT3( R, G, B ) );
+		AddGeometry( XMFLOAT3( 5.0f, 5.0f, 5.0f ),
+					 XMFLOAT3( 0.0f, 0.0f, (float)(i) * 5.0f ),
+					 XMFLOAT3( 0.0f , 0.0f, (float)i * 10.0f ),
+					 XMFLOAT3( R, G, B ) );
+		
+		mNumGeometryPerType[GeometryType::BOX]++;
 	}
-	//============================================
+	//================================================
+
+	//=================GEOMETRY PLANE===================
+	for ( size_t i = 0; i < 1; i++ )
+	{
+		float R = (float)(rand() % 255) * 0.00392f; // "Same" as divided by 255 but faster
+		float G = (float)(rand() % 255) * 0.00392f; //
+		float B = (float)(rand() % 255) * 0.00392f;	//
+		
+		AddGeometry( XMFLOAT3( 10.0f, 10.0f,  10.0f ),
+					 XMFLOAT3(  0.0f,  0.0f,  0.0f ),
+					 XMFLOAT3(  0.0f, -11.0f, 10.0f ),
+					 XMFLOAT3( R, G, B ) );
+		
+		mNumGeometryPerType[GeometryType::PLANE]++;
+	}
+	//================================================
 
 
 				
@@ -218,7 +268,7 @@ HRESULT Level::Initialize( ID3D11Device* device, ID3D11DeviceContext* deviceCont
 	mDirection = 1;
 
 	PointLightData light;
-	light.positionAndRadius = XMFLOAT4( -40.0f, 20.0f, 0.0f, 350.0f );
+	light.positionAndRadius = XMFLOAT4( -40.0f, 20.0f, -50.0f, 350.0f );
 	light.ambient			= XMFLOAT4( 0.0f, 0.0f, 0.0f, 1.0f );
 	light.diffuse			= XMFLOAT4( 0.85f, 0.85f, 1.0f, 1.0f );
 	light.specular			= XMFLOAT4( 1.0f, 1.0f, 1.0f, 1.0f );
@@ -257,12 +307,6 @@ HRESULT Level::Initialize( ID3D11Device* device, ID3D11DeviceContext* deviceCont
 	//-------------------------------------------------------------------------------------------------------------------
 
 
-
-	ID3D11Texture2D* crateTexture = nullptr;
-		
-	if( FAILED( CreateDDSTextureFromFile( mDevice , L"Textures/cobble.DDS", (ID3D11Resource**)&crateTexture, nullptr ) ) )
-		return E_FAIL;
-
 	D3D11_SAMPLER_DESC saD;
 	memset( &saD, 0, sizeof( saD ) );
 	saD.Filter			= D3D11_FILTER_MIN_MAG_MIP_LINEAR;
@@ -276,11 +320,6 @@ HRESULT Level::Initialize( ID3D11Device* device, ID3D11DeviceContext* deviceCont
 
 	if( FAILED( mDevice->CreateSamplerState( &saD, &mSamplerState ) ) )
 		return E_FAIL;
-
-	if( FAILED( mDevice->CreateShaderResourceView( crateTexture, nullptr, &mShaderResourceView ) ) )
-		return E_FAIL;
-
-	SAFE_RELEASE( crateTexture );
 	//===============================================
 
 
@@ -304,12 +343,14 @@ Level::Level()
 	mObjectVertexBuffer	= nullptr;
 	mInstanceBuffer		= nullptr;
 	mLightBuffer		= nullptr;
-	mShaderResourceView	= nullptr;
 	mSamplerState		= nullptr;
 	
-	mBox = new GeometryBox( XMFLOAT3( 0.0f, 0.0f, 0.0f ), 2.0f, 2.0f, 2.0f );
+	mBox				= nullptr;
+	mPlane				= nullptr;
+	
+	mRotation			= 0.0f;
 
-	mRotation = 0.0f;
+	mNumGeometryPerType = nullptr;
 }	
 
 Level::~Level()
@@ -318,9 +359,6 @@ Level::~Level()
 
 void Level::Release()
 {
-	//Remove if class does NOT have any
-	//resources to release!
-
 	SAFE_RELEASE( mObjectVertexBuffer );
 	SAFE_RELEASE( mInstanceBuffer );
 	SAFE_RELEASE( mLightBuffer );
@@ -330,6 +368,10 @@ void Level::Release()
 	SAFE_RELEASE( mBrickTextureData.normalMap );
 	SAFE_RELEASE( mBrickTextureData.displacementMap );
 
-	SAFE_RELEASE( mShaderResourceView );
 	SAFE_RELEASE( mSamplerState );	
+
+	mBox->Release();
+	mPlane->Release();
+	SAFE_DELETE( mBox );
+	SAFE_DELETE( mPlane );
 }

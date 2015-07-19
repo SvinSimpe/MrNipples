@@ -3,10 +3,18 @@
 
 #include "3DLibs.h"
 #include "GeometryBox.h"
+#include "GeometryPlane.h"
 #include "DDSTextureLoader.h"
 
 		const unsigned int			MAX_NUM_OF_OBJECTS			= 200;
 		const unsigned int			NUM_VERTICES_PER_OBJECT		= 36;
+
+enum GeometryType
+{
+	BOX,
+	PLANE,
+	AMOUNT
+};
 
 class Level
 {
@@ -20,14 +28,17 @@ class Level
 		ID3D11Buffer*					mLightBuffer;
 
 		TextureData						mBrickTextureData;
-		ID3D11ShaderResourceView*		mShaderResourceView;
 		ID3D11SamplerState*				mSamplerState;
 
 		// TEMPORARY FOR MOVING LIGHT!
 		int								mDirection;
 
 		GeometryBox*					mBox;
+		GeometryPlane*					mPlane;
 		float							mRotation;
+
+		unsigned int*					mNumGeometryPerType;
+
 
 	private:
 		HRESULT CreateVertexBuffer();
@@ -39,7 +50,8 @@ class Level
 		HRESULT UpdateLightBuffer();
 
 	public:
-		void	AddBox( XMFLOAT3 scale, XMFLOAT3 rotation, XMFLOAT3 translation, XMFLOAT3 color );
+		void	AddGeometry( XMFLOAT3 scale, XMFLOAT3 rotation, XMFLOAT3 translation, XMFLOAT3 color );
+		void	AddPlane( XMFLOAT3 scale, XMFLOAT3 rotation, XMFLOAT3 translation, XMFLOAT3 color );
 		void	CheckCollision();
 
 		void	Update( float deltaTime );

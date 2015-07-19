@@ -1,20 +1,13 @@
 #include "GeometryBox.h"
 
-unsigned int GeometryBox::sID = 0;
-
 GeometryBox::GeometryBox()
 {
-	mIsVisible	= true;
 	mVertexFaces = nullptr;
 }
 
 GeometryBox::GeometryBox( XMFLOAT3 origin, float width, float height, float depth )
 {
-	mID = sID++;
-	mIsVisible	= true;
-	mVertexFaces = new Vertex48[36];
-	XMStoreFloat4x4( &mPerInstanceData.world,  XMMatrixTranspose( XMMatrixIdentity() ) );
-	mPerInstanceData.color = XMFLOAT4( 1.0f, 0.0f, 0.0f, 1.0f );
+	mVertexFaces = new Vertex48[BOX_VERTEX_COUNT];
 
 	/*
 		       0-------1
@@ -85,43 +78,6 @@ GeometryBox::GeometryBox( XMFLOAT3 origin, float width, float height, float dept
 	v7.position.y = origin.y - halfHeight;
 	v7.position.z = origin.z - halfDepth;
 
-	///////====== TEST UV-COORD ========
-
-	//// Vertex 8
-	//Vertex48 v8;
-	//// Vertex 9
-	//Vertex48 v9;
-	//// Vertex 10
-	//Vertex48 v10;
-	//// Vertex 11
-	//Vertex48 v11;
-	//// Vertex 12
-	//Vertex48 v12;
-	//// Vertex 13
-	//Vertex48 v13;
-	//// Vertex 14
-	//Vertex48 v14;
-	//// Vertex 15
-	//Vertex48 v15;
-	//// Vertex 16
-	//Vertex48 v16;
-	//// Vertex 17
-	//Vertex48 v17;
-	//// Vertex 18
-	//Vertex48 v18;
-	//// Vertex 19
-	//Vertex48 v19;
-	//// Vertex 20
-	//Vertex48 v20;
-	//// Vertex 21
-	//Vertex48 v21;
-	//// Vertex 22
-	//Vertex48 v22;
-	//// Vertex 23
-	//Vertex48 v23;
-
-
-	///////=============================
 
 	// Front face
 	mVertexFaces[0] = v2;
@@ -183,8 +139,8 @@ GeometryBox::GeometryBox( XMFLOAT3 origin, float width, float height, float dept
 	mVertexFaces[35] = v7;
 
 
-	// Normals
-	//---------------------
+	// Normals  | UV-coordinates  |  Tangents
+	//========================================
 
 	// Front face
 	mVertexFaces[0].normal = XMFLOAT3( 0.0f, 0.0f, -1.0f );		mVertexFaces[0].texCoord = XMFLOAT2( 0.0f, 0.0f );		mVertexFaces[0].tangent = XMFLOAT3( 1.0f, 0.0f, 0.0f );
@@ -248,18 +204,6 @@ GeometryBox::GeometryBox( XMFLOAT3 origin, float width, float height, float dept
 
 GeometryBox::~GeometryBox()
 {
-	delete [] mVertexFaces;
-}
-
-void GeometryBox::IsVisible( bool isVisible )
-{
-	if( mIsVisible != isVisible )
-		mIsVisible = isVisible; 
-}
-
-bool GeometryBox::IsVisible() const
-{
-	return mIsVisible;
 }
 
 Vertex48* GeometryBox::VertexFaces()
@@ -267,12 +211,8 @@ Vertex48* GeometryBox::VertexFaces()
 	return mVertexFaces;
 }
 
-PerInstanceData GeometryBox::PerInstanceData()
+void GeometryBox::Release()
 {
-	return mPerInstanceData;
-}
-
-void GeometryBox::PerInstanceData( XMFLOAT4X4 data )
-{
-	mPerInstanceData.world = data;
+	if( mVertexFaces != nullptr )
+		delete [] mVertexFaces;
 }

@@ -3,8 +3,9 @@
 Camera::Camera()
 {
 	//mEyePosition		= XMFLOAT3( -20.0f, 10.0f, 150.0f); // RECORD POSITION
-	//mEyePosition		= XMFLOAT3( -80.0f, 100.0f, -10.0f);
-	mEyePosition		= XMFLOAT3( -15.0f, 10.0f, 200.0f); // SCREENSHOT POSITION (FOCUS Z=190)
+	//mEyePosition		= XMFLOAT3( -5.0f, 10.0f, -100.0f);
+	mEyePosition		= XMFLOAT3( -15.0f, 10.0f, 200.0f); // SCREENSHOT POSITION (FOCUS Z=190) | Lighting in Level.cpp == XMFLOAT4( -40.0f, 20.0f, 210.0f, 350.0f );
+	//mEyePosition		= XMFLOAT3( -55.0f, 250.0f, 100.0f); // TOP VIEW (z same as focus.z)
 	mFocusPosition		= XMFLOAT3( 0.0f, 0.0f, 190.0f );
 	mUpDirection		= XMFLOAT3( 0.0f, 1.0f,  0.0f );
 	mRightDirection		= XMFLOAT3( 1.0f, 0.0f,  0.0f );

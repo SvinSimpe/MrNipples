@@ -70,6 +70,7 @@
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="Game.cpp" />
     <ClCompile Include="GeometryBox.cpp" />
+    <ClCompile Include="GeometryPlane.cpp" />
     <ClCompile Include="Level.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
@@ -79,7 +80,9 @@
     <ClInclude Include="Camera.h" />
     <ClInclude Include="Game.h" />
     <ClInclude Include="GeometryBox.h" />
+    <ClInclude Include="GeometryPlane.h" />
     <ClInclude Include="Level.h" />
+    <ClInclude Include="Vertex48.h" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="SimpleShader.hlsl">

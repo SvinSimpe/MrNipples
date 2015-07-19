@@ -2,39 +2,21 @@
 #define _GEOMETRYBOX_H_
 
 #include "3DLibs.h"
+#include "Vertex48.h"
 
-struct Vertex48
-{
-	XMFLOAT3	position;
-	XMFLOAT3	normal;
-	XMFLOAT2	texCoord;
-	XMFLOAT3	tangent;
-	float		padding;
-};
+const unsigned int BOX_VERTEX_COUNT = 36;
 
 class GeometryBox
 {
 	private:
-		unsigned int	mID;
-		bool			mIsVisible;
-		Vertex48*		mVertexFaces;
-		PerInstanceData	mPerInstanceData;
-
-	public: 
-		static unsigned int sID;
+		Vertex48*			mVertexFaces;
 		
 	public:
 		GeometryBox();
 		GeometryBox( XMFLOAT3 origin, float width, float height, float depth );
 		~GeometryBox();
 
-		unsigned int	ID() const;
-		void			IsVisible( bool isVisible );
-		bool			IsVisible() const;
 		Vertex48*		VertexFaces();
-		PerInstanceData	PerInstanceData();
-		void			PerInstanceData( XMFLOAT4X4 data );
-
 		void			Release();
 };
 #endif
