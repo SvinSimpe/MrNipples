@@ -2,8 +2,13 @@
 #define _GAME_H_
 
 #include "3DLibs.h"
+#include "ShadowMap.h"
 #include "Level.h"
 #include "Camera.h"
+#include "GBuffer.h"
+#include "Shader.h"
+
+const unsigned int NUM_GBUFFERS = 4;
 
 class Game
 {
@@ -13,24 +18,43 @@ class Game
 		ID3D11RasterizerState*		mRasterizerStateSolid;
 		ID3D11RasterizerState*		mRasterizerStateWired;
 		ID3D11RasterizerState*		mCurrentRasterizerState;
-		ID3D11InputLayout*			mInputLayoutInstanced;
-		ID3D11VertexShader*			mVertexShader;
-		ID3D11HullShader*			mHullShader;
-		ID3D11DomainShader*			mDomainShader;
-		ID3D11PixelShader*			mPixelShader;
 		ID3D11Buffer*				mPerFrameCBuffer;
 		PerFrameData				mPerFrameData;
 
+		// Deferred
+		GBuffer**					mGBuffers;
+
+		// Light
+		std::vector<PointLightData>		mPointLightData;
+		ID3D11Buffer*					mLightBuffer;
+		int								mDirection;		// TEMPORARY FOR MOVING LIGHT!
+
+		// Shadow
+		ShadowMap*					mShadowMap;
+		DepthLightData				mDepthLightData;
+		ID3D11Buffer*				mDepthLightCBuffer;
+
 		// Game component
-		Level*	mLevel;
-		Camera*	mCamera;
+		Level*		mLevel;
+		Camera*		mCamera;
+		Shader**	mShaders;
 
 	private:
-		HRESULT CompileShader( char* shaderFile, char* pEntrypoint, char* pTarget, D3D10_SHADER_MACRO* pDefines, ID3DBlob** pCompiledShader );
-		HRESULT InitializeBasicShaders();
+		HRESULT InitializeShaders();
 		HRESULT CreateRasterizerStates();
+
 		HRESULT CreatePerFrameCBuffer();
+		HRESULT CreateLightBuffer();
+		HRESULT CreateDepthLightCBuffer();
+
 		HRESULT UpdatePerFrameCBuffer();
+		HRESULT UpdateLightBuffer();
+		HRESULT UpdateDepthLightCBuffer();
+
+		HRESULT RenderStandard( float deltaTime );		// Forward rendering with tesselation
+		HRESULT RenderGeometryPass( float deltaTime );
+		HRESULT RenderShadowPass( float deltaTime );
+		HRESULT RenderDeferredPass( float deltaTime );
 		
 
 	public:

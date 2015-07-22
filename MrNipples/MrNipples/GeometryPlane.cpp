@@ -83,6 +83,5 @@ Vertex48* GeometryPlane::VertexFaces()
 
 void GeometryPlane::Release()
 {
-	if( mVertexFaces != nullptr )
-		delete [] mVertexFaces;
+	SAFE_DELETE_ARRAY( mVertexFaces );
 }

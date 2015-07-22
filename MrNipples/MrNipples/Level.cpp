@@ -53,23 +53,6 @@ HRESULT Level::CreatePerInstanceBuffer()
 	return hr;
 }
 
-HRESULT Level::CreateLightBuffer()
-{
-	HRESULT hr = S_OK;
-
-	D3D11_BUFFER_DESC lbDesc;
-	lbDesc.ByteWidth			= sizeof( PointLightData ) * mPointLightData.size();
-	lbDesc.Usage				= D3D11_USAGE_DYNAMIC;
-	lbDesc.BindFlags			= D3D11_BIND_CONSTANT_BUFFER;
-	lbDesc.CPUAccessFlags		= D3D11_CPU_ACCESS_WRITE;
-	lbDesc.MiscFlags			= 0;
-	lbDesc.StructureByteStride	= 0;
-
-	hr = mDevice->CreateBuffer( &lbDesc, nullptr, &mLightBuffer );
-
-	return hr;
-}
-
 HRESULT Level::UpdateObjectVertexBuffer()
 {
 	HRESULT hr = S_OK;
@@ -100,41 +83,6 @@ HRESULT Level::UpdatePerInstanceBuffer()
 	{
 		memcpy( mappedResource.pData, &mInstanceData[0], sizeof(PerInstanceData) * mInstanceData.size() );
 	    mDeviceContext->Unmap( mInstanceBuffer, 0 ); 
-	}
-
-	return hr;
-}
-
-HRESULT Level::UpdateLightBuffer()
-{
-	HRESULT hr = S_OK;
-	
-	float zMin = -50.0f;
-	float zMax = 300.0f;
-
-	if( mPointLightData.at(0).positionAndRadius.z < zMax && mDirection == 1 )
-		mPointLightData.at(0).positionAndRadius.z += 0.005f;
-
-	if( mPointLightData.at(0).positionAndRadius.z > zMax )
-		mDirection = 0;
-
-	if( mPointLightData.at(0).positionAndRadius.z > zMin && mDirection == 0 )
-		mPointLightData.at(0).positionAndRadius.z -= 0.005f;
-
-	if( mPointLightData.at(0).positionAndRadius.z < zMin )
-		mDirection = 1;
-
-	D3D11_MAPPED_SUBRESOURCE mappedResource;
-	hr = mDeviceContext->Map( mLightBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource );
-	
-	if( SUCCEEDED( hr ) )
-	{
-		memcpy( mappedResource.pData, &mPointLightData[0], sizeof(PointLightData) * mPointLightData.size() );
-	    mDeviceContext->Unmap( mLightBuffer, 0 ); 
-
-		// Set constant buffer to shader stages
-		mDeviceContext->VSSetConstantBuffers( 1, 1, &mLightBuffer );
-		mDeviceContext->PSSetConstantBuffers( 1, 1, &mLightBuffer );
 	}
 
 	return hr;
@@ -187,8 +135,8 @@ void Level::Update( float deltaTime )
 	if( FAILED( UpdatePerInstanceBuffer() ) )
 		OutputDebugStringA( "FAILED TO UPDATE PER INSTANCE BUFFER :: Level.cpp" );
 
-	if( FAILED( UpdateLightBuffer() ) )
-		OutputDebugStringA( "FAILED TO UPDATE LIGHT BUFFER :: Level.cpp" );
+	//if( FAILED( UpdateLightBuffer() ) )
+	//	OutputDebugStringA( "FAILED TO UPDATE LIGHT BUFFER :: Level.cpp" );
 }
 
 void Level::Render( float deltaTime )
@@ -255,28 +203,12 @@ HRESULT Level::Initialize( ID3D11Device* device, ID3D11DeviceContext* deviceCont
 		
 		AddGeometry( XMFLOAT3( 10.0f, 10.0f,  10.0f ),
 					 XMFLOAT3(  0.0f,  0.0f,  0.0f ),
-					 XMFLOAT3(  0.0f, -11.0f, 10.0f ),
+					 XMFLOAT3(  0.0f, -50.0f, 10.0f ),
 					 XMFLOAT3( R, G, B ) );
 		
 		mNumGeometryPerType[GeometryType::PLANE]++;
 	}
 	//================================================
-
-
-				
-	//==================LIGHT======================
-	mDirection = 1;
-
-	PointLightData light;
-	light.positionAndRadius = XMFLOAT4( -40.0f, 20.0f, -50.0f, 350.0f );
-	light.ambient			= XMFLOAT4( 0.0f, 0.0f, 0.0f, 1.0f );
-	light.diffuse			= XMFLOAT4( 0.85f, 0.85f, 1.0f, 1.0f );
-	light.specular			= XMFLOAT4( 1.0f, 1.0f, 1.0f, 1.0f );
-	light.attenuation		= XMFLOAT3( 0.0f, 0.02f, 0.0f );
-
-	mPointLightData.push_back( light );
-	//=============================================
-
 
 					
 	//==================TEXTURE======================
@@ -330,8 +262,8 @@ HRESULT Level::Initialize( ID3D11Device* device, ID3D11DeviceContext* deviceCont
 	if( FAILED( CreatePerInstanceBuffer() ) )
 		return E_FAIL;
 	
-	if( FAILED( CreateLightBuffer() ) )
-		return E_FAIL;
+	//if( FAILED( CreateLightBuffer() ) )
+	//	return E_FAIL;
 
 	return S_OK;
 }
@@ -342,7 +274,7 @@ Level::Level()
 	mDeviceContext		= nullptr;
 	mObjectVertexBuffer	= nullptr;
 	mInstanceBuffer		= nullptr;
-	mLightBuffer		= nullptr;
+	//mLightBuffer		= nullptr;
 	mSamplerState		= nullptr;
 	
 	mBox				= nullptr;
@@ -361,7 +293,7 @@ void Level::Release()
 {
 	SAFE_RELEASE( mObjectVertexBuffer );
 	SAFE_RELEASE( mInstanceBuffer );
-	SAFE_RELEASE( mLightBuffer );
+	//SAFE_RELEASE( mLightBuffer );
 
 	SAFE_RELEASE( mBrickTextureData.colorMap );
 	SAFE_RELEASE( mBrickTextureData.specularMap );

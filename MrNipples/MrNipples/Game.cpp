@@ -1,130 +1,29 @@
 #include "Game.h"
 
-HRESULT Game::CompileShader( char* shaderFile, char* pEntrypoint, char* pTarget, D3D10_SHADER_MACRO* pDefines, ID3DBlob** pCompiledShader )
-{	
-	HRESULT hr = S_OK;
-
-	DWORD dwShaderFlags =	D3DCOMPILE_ENABLE_STRICTNESS | 
-							D3DCOMPILE_IEEE_STRICTNESS;
-
-	std::string shader_code;
-	std::ifstream in( shaderFile, std::ios::in | std::ios::binary );
-
-	if ( in )
-	{
-		in.seekg( 0, std::ios::end );
-		shader_code.resize( (unsigned int)in.tellg() );
-		in.seekg( 0, std::ios::beg );
-		in.read( &shader_code[0], shader_code.size() );
-		in.close();
-	}
-
-	ID3DBlob* pErrorBlob = nullptr;
-	hr = D3DCompile( shader_code.data(),
-							 shader_code.size(),
-							 NULL,
-							 pDefines,
-							 nullptr,
-							 pEntrypoint,
-							 pTarget,
-							 dwShaderFlags,
-							 NULL,
-							 pCompiledShader,
-							 &pErrorBlob );
-
-	if( pErrorBlob )
-	{
-		OutputDebugStringA( (char*)pErrorBlob->GetBufferPointer() );
-		pErrorBlob->Release();
-	}
-
-
-	return hr;
-}
-
-HRESULT Game::InitializeBasicShaders()
+HRESULT Game::InitializeShaders()
 {
-	HRESULT hr = S_OK;
+	// STANDARD SHADER
+	ShaderDesc shaderDesc;
+	shaderDesc.shaderFile	= "SimpleShader.hlsl";
+	shaderDesc.hasHull		= true;
+	shaderDesc.hasDomain	= true;
+	mShaders[0]				= new Shader( mDevice, shaderDesc );
 
-	//------------------------
-	// Compile Vertex Shader |
-	//------------------------
-	ID3DBlob* vs = nullptr;
-	
+	// GEOMETRY PASS SHADER
+	shaderDesc.shaderFile	= "GeometryPass.hlsl";
+	mShaders[1]				= new Shader( mDevice, shaderDesc );
 
-	if ( SUCCEEDED( hr = CompileShader( "SimpleShader.hlsl", "VS", "vs_5_0", nullptr, &vs ) ) )
-	{
-		if( SUCCEEDED( hr = mDevice->CreateVertexShader( vs->GetBufferPointer(),
-														  vs->GetBufferSize(),
-														  nullptr,
-														  &mVertexShader ) ) )
-		{
-			D3D11_INPUT_ELEMENT_DESC inputDescInstanced[] = {				 
-				{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT,    0,  0, D3D11_INPUT_PER_VERTEX_DATA,   0 },
-				{ "NORMAL",	  0, DXGI_FORMAT_R32G32B32_FLOAT,    0, 12, D3D11_INPUT_PER_VERTEX_DATA,   0 },
-				{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,		 0, 24, D3D11_INPUT_PER_VERTEX_DATA,   0 },
-				{ "TANGENT",  0, DXGI_FORMAT_R32G32B32_FLOAT,	 0, 32, D3D11_INPUT_PER_VERTEX_DATA,   0 },
-				{ "WORLD",	  0, DXGI_FORMAT_R32G32B32A32_FLOAT, 1,  0, D3D11_INPUT_PER_INSTANCE_DATA, 1 },
-				{ "WORLD",	  1, DXGI_FORMAT_R32G32B32A32_FLOAT, 1, 16, D3D11_INPUT_PER_INSTANCE_DATA, 1 },
-				{ "WORLD",	  2, DXGI_FORMAT_R32G32B32A32_FLOAT, 1, 32, D3D11_INPUT_PER_INSTANCE_DATA, 1 },
-				{ "WORLD",	  3, DXGI_FORMAT_R32G32B32A32_FLOAT, 1, 48, D3D11_INPUT_PER_INSTANCE_DATA, 1 },
-				{ "COLOR",	  0, DXGI_FORMAT_R32G32B32A32_FLOAT, 1, 64, D3D11_INPUT_PER_INSTANCE_DATA, 1 }
-			};
+	// DEPTH SHADER
+	shaderDesc.shaderFile	= "DepthShaders.hlsl";
+	mShaders[2]				= new Shader( mDevice, shaderDesc );
 
-			hr = mDevice->CreateInputLayout( inputDescInstanced,
-									     	  ARRAYSIZE( inputDescInstanced ),
-											  vs->GetBufferPointer(),
-											  vs->GetBufferSize(),
-											  &mInputLayoutInstanced );
-		}
+	// DEFERRED PASS SHADER
+	shaderDesc.shaderFile	= "DeferredPass.hlsl";
+	shaderDesc.hasHull		= false;
+	shaderDesc.hasDomain	= false;
+	mShaders[3]				= new Shader( mDevice, shaderDesc );
 
-		vs->Release();
-	}
-
-	//----------------------
-	// Compile Hull Shader |
-	//----------------------
-	ID3DBlob* ths = nullptr;
-
-	if( SUCCEEDED( hr = CompileShader( "SimpleShader.hlsl", "HS", "hs_5_0", nullptr, &ths ) ) )
-	{
-		hr = mDevice->CreateHullShader(  ths->GetBufferPointer(),
-										  ths->GetBufferSize(),
-										  nullptr,
-										  &mHullShader );
-		ths->Release();
-	}
-
-
-	//------------------------
-	// Compile Domain Shader |
-	//------------------------
-	ID3DBlob* tds = nullptr;
-
-	if( SUCCEEDED( hr = CompileShader( "SimpleShader.hlsl", "DS", "ds_5_0", nullptr, &tds ) ) )
-	{
-		hr = mDevice->CreateDomainShader(  tds->GetBufferPointer(),
-											tds->GetBufferSize(),
-											nullptr,
-											&mDomainShader );
-		tds->Release();
-	}
-
-	//-----------------------
-	// Compile Pixel Shader |
-	//-----------------------
-	ID3DBlob* tps = nullptr;
-
-	if( SUCCEEDED( hr = CompileShader( "SimpleShader.hlsl", "PS", "ps_5_0", nullptr, &tps ) ) )
-	{
-		hr = mDevice->CreatePixelShader( tps->GetBufferPointer(),
-										  tps->GetBufferSize(),
-										  nullptr,
-										  &mPixelShader );
-		tps->Release();
-	}
-
-	return hr;
+	return S_OK;
 }
 
 HRESULT Game::CreateRasterizerStates()
@@ -176,6 +75,36 @@ HRESULT Game::CreatePerFrameCBuffer()
 	return hr;
 }
 
+HRESULT Game::CreateLightBuffer()
+{
+	HRESULT hr = S_OK;
+
+	D3D11_BUFFER_DESC lbDesc;
+	lbDesc.ByteWidth			= sizeof( PointLightData ) * mPointLightData.size();
+	lbDesc.Usage				= D3D11_USAGE_DYNAMIC;
+	lbDesc.BindFlags			= D3D11_BIND_CONSTANT_BUFFER;
+	lbDesc.CPUAccessFlags		= D3D11_CPU_ACCESS_WRITE;
+	lbDesc.MiscFlags			= 0;
+	lbDesc.StructureByteStride	= 0;
+
+	hr = mDevice->CreateBuffer( &lbDesc, nullptr, &mLightBuffer );
+
+	return hr;
+}
+
+HRESULT Game::CreateDepthLightCBuffer()
+{
+	D3D11_BUFFER_DESC cbDesc;
+	cbDesc.ByteWidth			= sizeof( DepthLightData );
+	cbDesc.Usage				= D3D11_USAGE_DYNAMIC;
+	cbDesc.BindFlags			= D3D11_BIND_CONSTANT_BUFFER;
+	cbDesc.CPUAccessFlags		= D3D11_CPU_ACCESS_WRITE;
+	cbDesc.MiscFlags			= 0;
+	cbDesc.StructureByteStride	= 0;
+
+	return mDevice->CreateBuffer( &cbDesc, nullptr, &mDepthLightCBuffer );
+}
+
 HRESULT Game::UpdatePerFrameCBuffer()
 {
 HRESULT hr = S_OK;
@@ -202,6 +131,109 @@ HRESULT hr = S_OK;
 	return hr;
 }
 
+HRESULT Game::UpdateLightBuffer()
+{
+	HRESULT hr = S_OK;
+	
+	float zMin = -50.0f;
+	float zMax = 300.0f;
+
+	if( mPointLightData.at(0).positionAndRadius.z < zMax && mDirection == 1 )
+		mPointLightData.at(0).positionAndRadius.z += 0.005f;
+
+	if( mPointLightData.at(0).positionAndRadius.z > zMax )
+		mDirection = 0;
+
+	if( mPointLightData.at(0).positionAndRadius.z > zMin && mDirection == 0 )
+		mPointLightData.at(0).positionAndRadius.z -= 0.005f;
+
+	if( mPointLightData.at(0).positionAndRadius.z < zMin )
+		mDirection = 1;
+
+	D3D11_MAPPED_SUBRESOURCE mappedResource;
+	hr = mDeviceContext->Map( mLightBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource );
+	
+	if( SUCCEEDED( hr ) )
+	{
+		memcpy( mappedResource.pData, &mPointLightData[0], sizeof(PointLightData) * mPointLightData.size() );
+	    mDeviceContext->Unmap( mLightBuffer, 0 ); 
+
+		// Set constant buffer to shader stages
+		mDeviceContext->VSSetConstantBuffers( 1, 1, &mLightBuffer );
+		mDeviceContext->PSSetConstantBuffers( 1, 1, &mLightBuffer );
+	}
+
+	return hr;
+}
+
+HRESULT Game::UpdateDepthLightCBuffer()
+{
+	HRESULT hr = S_OK;
+
+	XMFLOAT3 position		= XMFLOAT3( mPointLightData.at(0).positionAndRadius.x, mPointLightData.at(0).positionAndRadius.y, mPointLightData.at(0).positionAndRadius.z );  /*XMFLOAT3( 55.0f, 55.0f, -55.0f );*/
+	XMFLOAT3 focusPosition	= XMFLOAT3( 0.0f, 0.0f, 0.0f );
+	XMFLOAT3 upDirection	= XMFLOAT3( 0.0f, 1.0f, 0.0f );
+	XMMATRIX view = XMMatrixLookAtLH(	XMLoadFloat3( &position ),
+										XMLoadFloat3( &focusPosition ),
+										XMLoadFloat3( &upDirection ) );
+
+	XMMATRIX projection = XMMatrixPerspectiveFovLH( 0.75f, 1280.0f / 720.0f, 0.5f, 5000.0f );
+
+	XMMATRIX world = XMMatrixIdentity();
+
+	XMStoreFloat4x4( &mDepthLightData.worldViewProjection, XMMatrixTranspose( world * view * projection ) );
+
+	D3D11_MAPPED_SUBRESOURCE mappedResource;
+	hr = mDeviceContext->Map( mDepthLightCBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource );
+
+	if( SUCCEEDED( hr ) )
+	{
+		memcpy( mappedResource.pData, &mDepthLightData, sizeof(mDepthLightData) );	
+		mDeviceContext->Unmap( mDepthLightCBuffer, 0 );
+	}
+
+	return hr;
+}
+
+HRESULT Game::RenderStandard( float deltaTime )
+{
+	// Set Rasterizer State
+	mDeviceContext->RSSetState( mCurrentRasterizerState );
+
+	// Set basic vertex description
+	mDeviceContext->IASetInputLayout( mShaders[ShaderType::STANDARD]->GetInputLayout() );
+
+	// Set topology
+	mDeviceContext->IASetPrimitiveTopology( D3D11_PRIMITIVE_TOPOLOGY_3_CONTROL_POINT_PATCHLIST );
+
+	//Set shader stages
+	mDeviceContext->VSSetShader( mShaders[ShaderType::STANDARD]->GetVertexShader(), nullptr, 0 );
+	mDeviceContext->HSSetShader( mShaders[ShaderType::STANDARD]->GetHullShader(),	nullptr, 0 );
+	mDeviceContext->DSSetShader( mShaders[ShaderType::STANDARD]->GetDomainShader(), nullptr, 0 );
+	mDeviceContext->GSSetShader( nullptr, nullptr, 0 );
+	mDeviceContext->PSSetShader( mShaders[ShaderType::STANDARD]->GetPixelShader(),	nullptr, 0 );
+
+	/// RENDER STUFF
+	mLevel->Render( deltaTime );
+
+	return S_OK;
+}
+
+HRESULT Game::RenderGeometryPass( float deltaTime )
+{
+	return S_OK;
+}
+
+HRESULT Game::RenderShadowPass( float deltaTime )
+{
+	return S_OK;
+}
+
+HRESULT Game::RenderDeferredPass( float deltaTime )
+{
+	return S_OK;
+}
+
 void Game::SetRasterizerStateWired( bool isWired )
 {
 	// Change to WIRED
@@ -215,52 +247,86 @@ void Game::SetRasterizerStateWired( bool isWired )
 
 void Game::Update( float deltaTime )
 {
-	UpdatePerFrameCBuffer();
+	if( FAILED( UpdatePerFrameCBuffer() ) )
+		OutputDebugStringA( "FAILED TO UPDATE PER FRAME CONSTANT BUFFER :: Game.cpp" );
+
+	if( FAILED( UpdateLightBuffer() ) )
+		OutputDebugStringA( "FAILED TO UPDATE LIGHT BUFFER :: Game.cpp" );
+
+	if( FAILED( UpdateDepthLightCBuffer() ) )
+		OutputDebugStringA( "FAILED TO UPDATE DEPTH CONSTANT LIGHT BUFFER :: Game.cpp" );
+
 	mLevel->Update( deltaTime );
 }
 
 void Game::Render( float deltaTime )
 {
-	// Set Rasterizer State
-	mDeviceContext->RSSetState( mCurrentRasterizerState );
+	/*
+		It is probably a good idea to be able to change between
+		rendering techniques with keyboard input. It would be
+		desirable to be able to render all render targets to the
+		screen simultaneously.
+	*/
 
+	RenderStandard( deltaTime );
 
-	// Set basic vertex description
-	mDeviceContext->IASetInputLayout( mInputLayoutInstanced );
-
-	// Set topology
-	mDeviceContext->IASetPrimitiveTopology( D3D11_PRIMITIVE_TOPOLOGY_3_CONTROL_POINT_PATCHLIST );
-	//mDeviceContext->IASetPrimitiveTopology( D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-	//mDeviceContext->IASetPrimitiveTopology( D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
-
-
-	//Set shader stages
-	mDeviceContext->VSSetShader( mVertexShader, nullptr, 0 );
-	mDeviceContext->HSSetShader( mHullShader, nullptr, 0 );
-	mDeviceContext->DSSetShader( mDomainShader, nullptr, 0 );
-	mDeviceContext->GSSetShader( nullptr, nullptr, 0 );
-	mDeviceContext->PSSetShader( mPixelShader, nullptr, 0 );
-
-	/// RENDER STUFF
-	mLevel->Render( deltaTime );
 }
 
 HRESULT Game::Initialize( ID3D11Device* device, ID3D11DeviceContext* deviceContext )
 {
 	mDevice			= device;
 	mDeviceContext	= deviceContext;
+
+
+	//============================ Create GBuffers ===============================
+	mGBuffers = new GBuffer*[NUM_GBUFFERS];
+	for (size_t i = 0; i < NUM_GBUFFERS; i++)
+		mGBuffers[i] = new GBuffer( device, 1280, 720, DXGI_FORMAT_R32G32B32A32_FLOAT );
+	//============================================================================
+	
+
+	//=========== Create Game Components ===========
 	mLevel			= new Level();
 	mCamera			= new Camera();
+	mShaders		= new Shader*[ShaderType::NUM_SHADERS];
+	//==============================================
 
+	//================== Create Lights ===========================
+	mDirection = 1;
 
-	if( FAILED( InitializeBasicShaders() ) )
+	PointLightData light;
+	light.positionAndRadius = XMFLOAT4( -40.0f, 20.0f, -50.0f, 350.0f );
+	light.ambient			= XMFLOAT4( 0.0f, 0.0f, 0.0f, 1.0f );
+	light.diffuse			= XMFLOAT4( 0.85f, 0.85f, 1.0f, 1.0f );
+	light.specular			= XMFLOAT4( 1.0f, 1.0f, 1.0f, 1.0f );
+	light.attenuation		= XMFLOAT3( 0.0f, 0.02f, 0.0f );
+
+	mPointLightData.push_back( light );
+	//============================================================
+
+	if( FAILED( InitializeShaders() ) )
 		return E_FAIL;
+
+
+	/*if( FAILED( InitializeBasicShaders() ) )
+		return E_FAIL;
+
+	if( FAILED( InitializeDepthShaders() ) )
+		return E_FAIL;*/
 	
 	if( FAILED( CreateRasterizerStates() ) )
 		return E_FAIL;
 
 	if( FAILED( CreatePerFrameCBuffer() ) )
 		return E_FAIL;
+
+	if( FAILED( CreateLightBuffer() ) )
+		return E_FAIL;
+
+	if( FAILED( CreateDepthLightCBuffer() ) )
+		return E_FAIL;
+
+	
 
 	if( FAILED( mLevel->Initialize( mDevice, mDeviceContext ) ) )
 		return E_FAIL;
@@ -275,14 +341,12 @@ Game::Game()
 	mRasterizerStateSolid		= nullptr;
 	mRasterizerStateWired		= nullptr;
 	mCurrentRasterizerState		= nullptr;	
-	mInputLayoutInstanced		= nullptr;
-	mVertexShader				= nullptr;
-	mHullShader					= nullptr;
-	mDomainShader				= nullptr;
-	mPixelShader				= nullptr;
 
-	mLevel	= nullptr;
-	mCamera	= nullptr;
+	mGBuffers					= nullptr;
+
+	mLevel		= nullptr;
+	mCamera		= nullptr;
+	mShaders	= nullptr;
 }
 
 Game::~Game()
@@ -293,14 +357,22 @@ void Game::Release()
 {
 	SAFE_RELEASE( mRasterizerStateSolid );
 	SAFE_RELEASE( mRasterizerStateWired );
-	SAFE_RELEASE( mInputLayoutInstanced );
-	SAFE_RELEASE( mVertexShader );
-	SAFE_RELEASE( mHullShader );
-	SAFE_RELEASE( mDomainShader );
-	SAFE_RELEASE( mPixelShader );
 
+	for (size_t i = 0; i < NUM_GBUFFERS; i++)
+	{
+		mGBuffers[i]->Release();
+		SAFE_DELETE( mGBuffers[i] );
+	}
+	SAFE_DELETE_ARRAY( mGBuffers );
 
 	mLevel->Release();
 	SAFE_DELETE( mLevel );
 	SAFE_DELETE( mCamera );
+
+	for (size_t i = 0; i < ShaderType::NUM_SHADERS; i++)
+	{
+		mShaders[i]->Relase();
+		SAFE_DELETE( mShaders[i] );
+	}
+	SAFE_DELETE_ARRAY( mShaders );
 }

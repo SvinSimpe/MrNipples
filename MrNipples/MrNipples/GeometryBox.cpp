@@ -213,6 +213,5 @@ Vertex48* GeometryBox::VertexFaces()
 
 void GeometryBox::Release()
 {
-	if( mVertexFaces != nullptr )
-		delete [] mVertexFaces;
+	SAFE_DELETE_ARRAY( mVertexFaces );
 }

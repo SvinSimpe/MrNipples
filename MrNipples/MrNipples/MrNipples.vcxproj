@@ -68,20 +68,27 @@
   <ItemGroup>
     <ClCompile Include="Application.cpp" />
     <ClCompile Include="Camera.cpp" />
+    <ClCompile Include="DeferredPass.cpp" />
     <ClCompile Include="Game.cpp" />
+    <ClCompile Include="GBuffer.cpp" />
     <ClCompile Include="GeometryBox.cpp" />
     <ClCompile Include="GeometryPlane.cpp" />
     <ClCompile Include="Level.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="Shader.cpp" />
+    <ClCompile Include="ShadowMap.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="3DLibs.h" />
     <ClInclude Include="Application.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="Game.h" />
+    <ClInclude Include="GBuffer.h" />
     <ClInclude Include="GeometryBox.h" />
     <ClInclude Include="GeometryPlane.h" />
     <ClInclude Include="Level.h" />
+    <ClInclude Include="Shader.h" />
+    <ClInclude Include="ShadowMap.h" />
     <ClInclude Include="Vertex48.h" />
   </ItemGroup>
   <ItemGroup>
@@ -97,6 +104,16 @@
   <ItemGroup>
     <Image Include="Textures\cobble.dds" />
     <Image Include="Textures\woodCrate.dds" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="DepthShaders.hlsl">
+      <FileType>Document</FileType>
+    </Text>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="GeometryPass.hlsl">
+      <FileType>Document</FileType>
+    </Text>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

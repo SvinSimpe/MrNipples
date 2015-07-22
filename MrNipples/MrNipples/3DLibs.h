@@ -3,6 +3,7 @@
 ///---------------------------------------------------
 #define SAFE_RELEASE(x) if( x ) { (x)->Release(); (x) = NULL; }
 #define SAFE_DELETE(x) if( x ) { delete(x); (x) = NULL; }
+#define SAFE_DELETE_ARRAY(x) if( x ) { delete [] (x); (x) = NULL; }
 #define PI (3.14159265358979323846f)
 
 #pragma comment( lib, "d3d11.lib" )
@@ -31,6 +32,11 @@ struct PerFrameData // 144 byte
 	XMFLOAT4X4  projection;
 	XMFLOAT3	eyePosition;
 	float		padding;
+};
+
+struct DepthLightData
+{
+	XMFLOAT4X4 worldViewProjection;
 };
 
 struct PointLightData // 80 byte
