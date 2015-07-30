@@ -13,6 +13,14 @@ enum ShaderType
 	NUM_SHADERS
 };
 
+enum InputLayoutType
+{
+	VERTEX48,
+	VERTEX32,
+
+	NUM_INPUT_LAYOUT_TYPES
+};
+
 struct ShaderDesc
 {
 	char*	shaderFile	= nullptr;
@@ -21,6 +29,8 @@ struct ShaderDesc
 	bool	hasDomain	= false;
 	bool	hasGeometry	= false;
 	bool	hasPixel	= true;
+
+	InputLayoutType	inputLayoutType = InputLayoutType::VERTEX48;
 };
 
 class Shader

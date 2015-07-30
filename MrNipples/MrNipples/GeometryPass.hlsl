@@ -2,7 +2,7 @@ cbuffer CB_PER_FRAME : register(b0)
 {
 	matrix view;
 	matrix proj;
-	float3 eyePosition;
+	float4 eyePositionAndTessAmount;
 };
 
 struct PointLight
@@ -60,7 +60,7 @@ struct HullOut // Pass through
 
 struct DomainOut
 {
-	float4 position			: SV_POSITION;
+	float4 position			: SV_Position;
 	float3 worldPosition	: WORLD_POSITION;
 	float3 normal			: NORMAL;
 	float2 texCoord			: TEXCOORD;
@@ -110,12 +110,13 @@ HullConstantOut HSConstant( InputPatch<VertexOut, 3> patch, uint pid : SV_Primit
 {
 	HullConstantOut output = (HullConstantOut)0;
 	
+	//return output;
 
 	float3 centerL = 0.25f*( patch[0].position + patch[1].position + patch[2].position );
 
 	float3 centerW = mul( float4( centerL, 1.0f ), patch[0].world ).xyz;
 	
-	float d = distance( centerW, eyePosition );
+	float d = distance( centerW, eyePositionAndTessAmount.xyz );
 
 	// Tessellate the patch based on distance from the eye such that
 	// the tessellation is 0 if d >= d1 and 60 if d <= d0.  The interval
@@ -128,10 +129,10 @@ HullConstantOut HSConstant( InputPatch<VertexOut, 3> patch, uint pid : SV_Primit
 	if( tess <= 1.0f)
 		tess = 1.0f;
 
-	output.edgeFactor[0]	= tess; // BLOCK 8
-	output.edgeFactor[1]	= tess;	// BLOCK 8
-	output.edgeFactor[2]	= tess;	// BLOCK 8
-	output.insideFactor		= tess;	// BLOCK 8
+	output.edgeFactor[0]	= 8; // BLOCK 8
+	output.edgeFactor[1]	= 8;	// BLOCK 8
+	output.edgeFactor[2]	= 8;	// BLOCK 8
+	output.insideFactor		= 8;	// BLOCK 8
 
 	return output;
 }
@@ -200,24 +201,28 @@ DomainOut DS( HullConstantOut input, float3 baryCoords : SV_DomainLocation, cons
 	output.position			= mul( output.position, proj );
 	output.tangent			= normalize( finalTangent );
 	output.color			= tri[0].color;
-    
+
     return output;    
 }
 
-
+struct PixelOut
+{
+	float4 worldPosition	: SV_TARGET0;
+	float4 normal			: SV_TARGET1;
+	float4 diffuse			: SV_TARGET2;
+	float4 specular			: SV_TARGET3;
+};
 
 //=================
 //	PIXEL SHADER
 //=================
-float4 PS( DomainOut input ) : SV_Target
+PixelOut PS( DomainOut input )
 {
+	PixelOut output = (PixelOut)0;
+
+	//===============NORMAL MAp===============
 	// Calculate Binormal
 	float3 binormal = cross( input.normal, input.tangent );
-
-	//// Get the normal
-	//float3 sampledNormal = 2 * normalMap.Sample( samplerState, input.texCoord ).xyz - 1;
-	//float3 normal = normalize( input.normal + ( sampledNormal.x * input.tangent ) + ( sampledNormal.y * binormal ) );
-
 	
 	// Sample normal and transform from tangent space to world space
 	float3 sampledNormal = 2 * normalMap.Sample( samplerState, input.texCoord ).xyz - 1;
@@ -228,35 +233,22 @@ float4 PS( DomainOut input ) : SV_Target
 	float3x3 TBN = float3x3( T, B, N );
 
 	float3 normal = mul( sampledNormal, TBN );
-	//==========================
-
-	/*return float4( normal, 1.0f );*/
 
 
+	//=============DIFFUSE MAP=============
+	float3 diffuse = colorMap.Sample( samplerState, input.texCoord ).xyz;
 
-	//						LIGHTING
-	///====================================================
-	float3  finalDiffuse	= float3( 0.01f, 0.01f, 0.01f );
-	float3	lightVec		= pointLight.positionAndRadius.xyz - input.worldPosition;
-	float	lightVecLength	= length( lightVec );
-	
-	if( lightVecLength > pointLight.positionAndRadius.w )
-		return float4( finalDiffuse * colorMap.Sample( samplerState, input.texCoord ).xyz, 1.0f );
 		
+	//============SPECULAR MAP============
+	float3 specular = specularMap.Sample( samplerState, input.texCoord ).xyz;
 
-	
-	lightVec /= lightVecLength;
-	float diffuseFactor = saturate( dot( lightVec, normal ) );		
 
-	float finalAtt	= 1.0f / (	pointLight.attenuation[0] + pointLight.attenuation[1] *
-								lightVecLength + pointLight.attenuation[2] *
-								lightVecLength * lightVecLength );
+	// Save to Render targets
 
-	finalDiffuse	= diffuseFactor * pointLight.diffuse.xyz * colorMap.Sample( samplerState, input.texCoord ).xyz;
-	finalDiffuse	*= finalAtt;
+	output.worldPosition	= float4( input.worldPosition, 1.0f );
+	output.normal			= float4( normal, 1.0f );
+	output.diffuse			= float4( diffuse, 1.0f );
+	output.specular			= float4( specular, 1.0f );
 
-	float4 finalSpecular = float4( finalDiffuse * specularMap.Sample( samplerState, input.texCoord ).xyz, 1.0f );
-
-	return float4( finalDiffuse + finalSpecular.xyz , 1.0f );
-	///====================================================
+	return output;
 }

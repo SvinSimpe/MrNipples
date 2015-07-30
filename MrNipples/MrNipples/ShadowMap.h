@@ -22,6 +22,7 @@ class ShadowMap
 		~ShadowMap();
 
 		void BindDsvAndSetNullRenderTarget( ID3D11DeviceContext* deviceContext );
+		ID3D11ShaderResourceView* ShaderResourceView();
 
 		void Release();
 };

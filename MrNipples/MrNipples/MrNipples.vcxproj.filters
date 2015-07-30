@@ -45,10 +45,10 @@
     <ClCompile Include="GBuffer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="DeferredPass.cpp">
-      <Filter>Resource Files</Filter>
-    </ClCompile>
     <ClCompile Include="Shader.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="AssetManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -74,9 +74,6 @@
     <ClInclude Include="GeometryPlane.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Vertex48.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="ShadowMap.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -86,15 +83,24 @@
     <ClInclude Include="Shader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="AssetManager.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="VertexLayout.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <Text Include="SimpleShader.hlsl">
-      <Filter>Resource Files</Filter>
-    </Text>
     <Text Include="DepthShaders.hlsl">
       <Filter>Resource Files</Filter>
     </Text>
     <Text Include="GeometryPass.hlsl">
+      <Filter>Resource Files</Filter>
+    </Text>
+    <Text Include="DeferredPass.hlsl">
+      <Filter>Resource Files</Filter>
+    </Text>
+    <Text Include="SimpleShader.hlsl">
       <Filter>Resource Files</Filter>
     </Text>
   </ItemGroup>

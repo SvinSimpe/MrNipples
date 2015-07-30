@@ -5,7 +5,7 @@
 
 class GBuffer
 {
-	private:
+	public:
 		ID3D11RenderTargetView*		mRenderTargetView;
 		ID3D11ShaderResourceView*	mShaderResourceView;
 

@@ -11,6 +11,7 @@
 
 #include <Windows.h>
 #include <d3d11.h>
+#include <dxgi.h>
 #include <d3dcompiler.h>
 #include <DirectXMath.h>
 #include <string>
@@ -20,43 +21,39 @@
 using namespace DirectX;
 ///---------------------------------------------------
 
+static const float CLEAR_COLOR_BLACK[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
+static const float CLEAR_COLOR_RED[4] = { 1.0f, 0.0f, 0.0f, 1.0f };
+static const float CLEAR_COLOR_GREEN[4] = { 0.0f, 1.0f, 0.0f, 1.0f };
+static const float CLEAR_COLOR_BLUE[4] = { 0.0f, 0.0f, 1.0f, 1.0f };
+
 struct PerInstanceData // 80 byte
 {
 	XMFLOAT4X4  world;
 	XMFLOAT4	color;
 };
 
-struct PerFrameData // 144 byte
+struct PerFrameData // 152 byte
 {
-	XMFLOAT4X4  view;
-	XMFLOAT4X4  projection;
-	XMFLOAT3	eyePosition;
-	float		padding;
+	XMFLOAT4X4			view;
+	XMFLOAT4X4			projection;
+	XMFLOAT4			eyePositionAndTessAmount;
 };
 
-struct DepthLightData
+struct DepthLightData // 16 byte
 {
 	XMFLOAT4X4 worldViewProjection;
 };
 
-struct PointLightData // 80 byte
+struct PointLightData // 144 byte
 {
 	XMFLOAT4	positionAndRadius;
 	XMFLOAT4	ambient;
 	XMFLOAT4	diffuse;
 	XMFLOAT4	specular;
 	XMFLOAT3	attenuation;
+	XMFLOAT4X4  world;
 	float		padding;
 };
-
-struct TextureData
-{
-	ID3D11ShaderResourceView*	colorMap;
-	ID3D11ShaderResourceView*	specularMap;
-	ID3D11ShaderResourceView*	normalMap;
-	ID3D11ShaderResourceView*	displacementMap;
-};
-
 ///---------------------------------------------------
 #endif
 

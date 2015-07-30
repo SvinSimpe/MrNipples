@@ -68,23 +68,41 @@ Shader::Shader( ID3D11Device* device, ShaderDesc desc )
 														  nullptr,
 														  &mVertexShader ) ) )
 		{
-			D3D11_INPUT_ELEMENT_DESC inputDescInstanced[] = {				 
-			{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT,    0,  0, D3D11_INPUT_PER_VERTEX_DATA,   0 },
-			{ "NORMAL",	  0, DXGI_FORMAT_R32G32B32_FLOAT,    0, 12, D3D11_INPUT_PER_VERTEX_DATA,   0 },
-			{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,		 0, 24, D3D11_INPUT_PER_VERTEX_DATA,   0 },
-			{ "TANGENT",  0, DXGI_FORMAT_R32G32B32_FLOAT,	 0, 32, D3D11_INPUT_PER_VERTEX_DATA,   0 },
-			{ "WORLD",	  0, DXGI_FORMAT_R32G32B32A32_FLOAT, 1,  0, D3D11_INPUT_PER_INSTANCE_DATA, 1 },
-			{ "WORLD",	  1, DXGI_FORMAT_R32G32B32A32_FLOAT, 1, 16, D3D11_INPUT_PER_INSTANCE_DATA, 1 },
-			{ "WORLD",	  2, DXGI_FORMAT_R32G32B32A32_FLOAT, 1, 32, D3D11_INPUT_PER_INSTANCE_DATA, 1 },
-			{ "WORLD",	  3, DXGI_FORMAT_R32G32B32A32_FLOAT, 1, 48, D3D11_INPUT_PER_INSTANCE_DATA, 1 },
-			{ "COLOR",	  0, DXGI_FORMAT_R32G32B32A32_FLOAT, 1, 64, D3D11_INPUT_PER_INSTANCE_DATA, 1 }
-				};
+
+			if( desc.inputLayoutType == InputLayoutType::VERTEX48 )
+			{
+				D3D11_INPUT_ELEMENT_DESC inputDescInstanced[] = {				 
+				{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT,    0,  0, D3D11_INPUT_PER_VERTEX_DATA,   0 },
+				{ "NORMAL",	  0, DXGI_FORMAT_R32G32B32_FLOAT,    0, 12, D3D11_INPUT_PER_VERTEX_DATA,   0 },
+				{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,		 0, 24, D3D11_INPUT_PER_VERTEX_DATA,   0 },
+				{ "TANGENT",  0, DXGI_FORMAT_R32G32B32_FLOAT,	 0, 32, D3D11_INPUT_PER_VERTEX_DATA,   0 },
+				{ "WORLD",	  0, DXGI_FORMAT_R32G32B32A32_FLOAT, 1,  0, D3D11_INPUT_PER_INSTANCE_DATA, 1 },
+				{ "WORLD",	  1, DXGI_FORMAT_R32G32B32A32_FLOAT, 1, 16, D3D11_INPUT_PER_INSTANCE_DATA, 1 },
+				{ "WORLD",	  2, DXGI_FORMAT_R32G32B32A32_FLOAT, 1, 32, D3D11_INPUT_PER_INSTANCE_DATA, 1 },
+				{ "WORLD",	  3, DXGI_FORMAT_R32G32B32A32_FLOAT, 1, 48, D3D11_INPUT_PER_INSTANCE_DATA, 1 },
+				{ "COLOR",	  0, DXGI_FORMAT_R32G32B32A32_FLOAT, 1, 64, D3D11_INPUT_PER_INSTANCE_DATA, 1 } };
+
+
 
 				hr = device->CreateInputLayout( inputDescInstanced,
 										     	  ARRAYSIZE( inputDescInstanced ),
 												  vs->GetBufferPointer(),
 												  vs->GetBufferSize(),
 												  &mInputLayout );
+			}
+			else if( desc.inputLayoutType == InputLayoutType::VERTEX32 )
+			{
+				D3D11_INPUT_ELEMENT_DESC inputDesc[] = {				 
+				{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT,    0,  0, D3D11_INPUT_PER_VERTEX_DATA,   0 },
+				{ "NORMAL",	  0, DXGI_FORMAT_R32G32B32_FLOAT,    0, 12, D3D11_INPUT_PER_VERTEX_DATA,   0 },
+				{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,		 0, 24, D3D11_INPUT_PER_VERTEX_DATA,   0 } };
+
+				hr = device->CreateInputLayout( inputDesc,
+										     	  ARRAYSIZE( inputDesc ),
+												  vs->GetBufferPointer(),
+												  vs->GetBufferSize(),
+												  &mInputLayout );
+			}
 		}
 
 
@@ -126,19 +144,40 @@ Shader::Shader( ID3D11Device* device, ShaderDesc desc )
 		}
 	}
 
-	//-----------------------
-	// Compile Pixel Shader |
-	//-----------------------
-	ID3DBlob* tps = nullptr;
-
-	if( SUCCEEDED( hr = CompileShader( desc.shaderFile, "PS", "ps_5_0", nullptr, &tps ) ) )
+	if( desc.hasPixel )
 	{
-		hr = device->CreatePixelShader( tps->GetBufferPointer(),
-										  tps->GetBufferSize(),
-										  nullptr,
-										  &mPixelShader );
-		tps->Release();
+		//-----------------------
+		// Compile Pixel Shader |
+		//-----------------------
+		ID3DBlob* tps = nullptr;
+
+		if( SUCCEEDED( hr = CompileShader( desc.shaderFile, "PS", "ps_5_0", nullptr, &tps ) ) )
+		{
+			hr = device->CreatePixelShader( tps->GetBufferPointer(),
+											  tps->GetBufferSize(),
+											  nullptr,
+											  &mPixelShader );
+			tps->Release();
+		}
 	}
+
+	if( hr == S_OK )
+		{
+			OutputDebugStringA( "---------- " );
+				OutputDebugStringA( "Succesfully compiled " );
+			OutputDebugStringA( desc.shaderFile );
+			OutputDebugStringA( " ---------- \n" );
+		}
+		else
+		{
+			OutputDebugStringA( "---------- " );
+				OutputDebugStringA( "Failed to compile " );
+			OutputDebugStringA( desc.shaderFile );
+			OutputDebugStringA( " ---------- \n" );
+
+			exit(0);
+		
+		}
 }
 
 Shader::~Shader()

@@ -4,24 +4,29 @@
 
 void Application::Render( float deltaTime )
 {
-	// Clear Back Buffer
-	//static float clearColor[4] = { 0.4f, 0.35f, 0.15f, 1.0f };
-	//static float clearColor[4] = { 0.7f, 0.7f, 0.7f, 1.0f };
-	static float clearColor[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
+	SetViewPort();
 
-	mDeviceContext->ClearRenderTargetView( mRenderTargetView, clearColor );
+	mDeviceContext->ClearRenderTargetView( mRenderTargetView, CLEAR_COLOR_BLUE );
 
-	// Clear Depth Buffer
+	//// Clear Depth Buffer
 	mDeviceContext->ClearDepthStencilView( mDepthStencilView, D3D11_CLEAR_DEPTH, 1.0f, 0 );
 
-	// Set Render target
+	//// Set Render target
 	mDeviceContext->OMSetRenderTargets( 1, &mRenderTargetView, mDepthStencilView );
 
 	//Draw Game here
-	mGame->Render( deltaTime );
+	mGame->RenderStandard( deltaTime );
+	//mGame->RenderGeometryPass( deltaTime );
+	//mGame->RenderShadowPass( deltaTime );
+	//SetViewPort();
+	//mGame->RenderDeferredPass( deltaTime );
+
+	//mGame->Render( deltaTime );
 
 	// Swap Front and Back Buffer
 	mSwapChain->Present( 0, 0 );
+
+	mDeviceContext->ClearState();
 }
 
 void Application::PrintFPSinWindowHeader()
@@ -46,8 +51,8 @@ void Application::SetViewPort()
 	RECT rc;
 	GetClientRect( mHWnd, &rc );
 
-	int width	= rc.right - rc.left;
-	int height	= rc.bottom - rc.top;
+	int width	= ( rc.right - rc.left );
+	int height	= ( rc.bottom - rc.top );
 
 	//-------------
 	// Set Viewport
@@ -70,6 +75,55 @@ void Application::HandleInput( UINT msg, WPARAM wParam, LPARAM lParam, float del
 
 	switch ( msg )
 	{
+		// Hold ALT + NUMPAD 1-7 to change level of tesselation
+		case WM_SYSKEYDOWN:
+		{
+			switch (wParam) 
+			{
+				case VK_NUMPAD1: 
+
+					// Process the NUMPAD 1 key.
+					mGame->SetTesselationAmount( 1.0f );
+					break;
+
+				case VK_NUMPAD2: 
+
+					// Process the NUMPAD 2 key.
+					mGame->SetTesselationAmount( 2.0f );
+					break;
+
+				case VK_NUMPAD3: 
+
+					// Process the NUMPAD 3 key.
+					mGame->SetTesselationAmount( 4.0f );
+					break;
+
+				case VK_NUMPAD4: 
+
+					// Process the NUMPAD 4 key.
+					mGame->SetTesselationAmount( 8.0f );
+					break;
+
+				case VK_NUMPAD5: 
+
+					// Process the NUMPAD 5 key.
+					mGame->SetTesselationAmount( 16.0f );
+					break;
+
+				case VK_NUMPAD6: 
+
+					// Process the NUMPAD 6 key.
+					mGame->SetTesselationAmount( 32.0f );
+					break;
+
+				case VK_NUMPAD7: 
+
+					// Process the NUMPAD 7 key.
+					mGame->SetTesselationAmount( 64.0f );
+					break;
+			}
+		}
+
 		case WM_KEYDOWN: 
             switch (wParam) 
             { 
@@ -100,7 +154,7 @@ void Application::HandleInput( UINT msg, WPARAM wParam, LPARAM lParam, float del
 
 			    case VK_CONTROL: 
                     
-                    // Process the Control  key. 
+                    // Process the Control key. 
 					if( mPrevKeyboardState == WM_KEYUP )
 					{
 						if( mChangeRasterizerState )
@@ -115,17 +169,16 @@ void Application::HandleInput( UINT msg, WPARAM wParam, LPARAM lParam, float del
 			     case VK_DELETE: 
                     
                     // Process the DEL key.
-					BOOL isFullscreen = false;
+					BOOL isFullscreen;// = false;
 					mSwapChain->GetFullscreenState( &isFullscreen, nullptr );
 					
 					if( isFullscreen )
 						mSwapChain->SetFullscreenState( false, nullptr );
 					else
 						mSwapChain->SetFullscreenState( true, nullptr );
-
-
-                    break; 
-			}
+                    break; 			
+			}	
+				
 	}
 
 	mPrevKeyboardState = mCurrKeyboardState;
@@ -351,7 +404,7 @@ HRESULT Application::InitializeDirectX11()
 
 	// Game component
 	mGame = new Game();
-	hr = mGame->Initialize( mDevice, mDeviceContext );
+	hr = mGame->Initialize( mDevice, mDeviceContext, mRenderTargetView );
 
 	return hr;
 }
@@ -365,7 +418,8 @@ int Application::Run()
 	__int64 prevTimeStamp = 0;
 	QueryPerformanceCounter((LARGE_INTEGER*)&prevTimeStamp);
 
-	MSG msg = {0};
+	MSG msg = { 0 };
+
 
 	while ( WM_QUIT != msg.message )
 	{
@@ -378,24 +432,12 @@ int Application::Run()
 		else
 		{
 			__int64 currTimeStamp = 0;
-			QueryPerformanceCounter((LARGE_INTEGER*)&currTimeStamp);
-			float deltaTime = (currTimeStamp - prevTimeStamp) * secsPerCnt;
-
+			QueryPerformanceCounter( (LARGE_INTEGER*)&currTimeStamp );
+			float deltaTime = ( currTimeStamp - prevTimeStamp ) * secsPerCnt;
 
 			HandleInput( msg.message, msg.wParam, msg.lParam, deltaTime );
 			mGame->Update( deltaTime );
 			Render( deltaTime );
-
-			///TEST
-			//if( m_changeRasterizerState )
-			//{
-			//	if( m_currentRasterizerState == m_rasterizerStateSolid )
-			//		m_currentRasterizerState = m_rasterizerStateWired;
-			//	else
-			//		m_currentRasterizerState = m_rasterizerStateSolid;
-
-			//	m_changeRasterizerState = false;
-			//}
 
 			prevTimeStamp = currTimeStamp;
 

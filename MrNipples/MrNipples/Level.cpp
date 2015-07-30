@@ -88,6 +88,21 @@ HRESULT Level::UpdatePerInstanceBuffer()
 	return hr;
 }
 
+HRESULT Level::RenderOpaque( float deltaTime )
+{
+
+
+	return S_OK;
+}
+
+HRESULT Level::RenderTransparent( float deltaTime )
+{
+
+
+
+	return S_OK;
+}
+
 void Level::AddGeometry( XMFLOAT3 scale, XMFLOAT3 rotation, XMFLOAT3 translation, XMFLOAT3 color )
 {
 	PerInstanceData newInstance;
@@ -141,17 +156,20 @@ void Level::Update( float deltaTime )
 
 void Level::Render( float deltaTime )
 {
-	//=============Textures=============
+	/*
+		Should probably add RenderTransparent and RenderOpaque functions
+		that utilizes Forward rendering and Deferred rendering on different
+		sets of objects in the scene.
 
-	//--------------Brick---------------
-	mDeviceContext->DSSetShaderResources( 0, 1, &mBrickTextureData.displacementMap );
-	mDeviceContext->DSSetSamplers( 0, 1, &mSamplerState );
-	ID3D11ShaderResourceView* pixelViews[3] = { mBrickTextureData.colorMap, mBrickTextureData.specularMap, mBrickTextureData.normalMap };
-	mDeviceContext->PSSetShaderResources( 1, 3, pixelViews );
-	
-	//----------------------------------
-
-	mDeviceContext->PSSetSamplers( 0, 1, &mSamplerState );
+		Each object can store a float ranging from 0.0 to 1.0 representing
+		the opacity of the object. Perhaps implementing function for batching
+		all objects with 1.0 to one container and the rest to another.
+		
+		Some optimization can be done in terms of sensitivity towards this
+		floating value. Objects that has values from 0.9x up to 1.0 may be
+		perceived as opaque and will be rendered as such. This MAY result in
+		a small performance increase *fingers crossed*.
+	*/
 
 	UINT32 stride[2]				= { sizeof(Vertex48), sizeof(PerInstanceData) };
 	UINT32 offset[2]				= { 0, 0 };
@@ -174,7 +192,7 @@ HRESULT Level::Initialize( ID3D11Device* device, ID3D11DeviceContext* deviceCont
 	mBox	= new GeometryBox( XMFLOAT3( 0.0f, 0.0f, 0.0f ), 2.0f, 2.0f, 2.0f );
 	mPlane	= new GeometryPlane( XMFLOAT3( 0.0f, 0.0f, 0.0f ), 40.0f, 40.0f );
 
-	mNumGeometryPerType = new unsigned int[GeometryType::AMOUNT];
+	mNumGeometryPerType = new unsigned int[GeometryType::NUM_GEOMETRY_TYPES];
 	mNumGeometryPerType[GeometryType::BOX]		= 0;
 	mNumGeometryPerType[GeometryType::PLANE]	= 0;
 					
@@ -214,32 +232,32 @@ HRESULT Level::Initialize( ID3D11Device* device, ID3D11DeviceContext* deviceCont
 	//==================TEXTURE======================
 
 	//------------------BRICK----------------------
-	ID3D11Texture2D* tempTexture = nullptr;
+	//ID3D11Texture2D* tempTexture = nullptr;
 
-	// COLOR-------------------------------------------------------------------------------------------------------------
-	if( FAILED( CreateDDSTextureFromFile( mDevice , L"Textures/Cobble/cobbleTexture_COLOR.DDS", (ID3D11Resource**)&tempTexture, nullptr ) ) )
-		return E_FAIL;
-	if( FAILED( mDevice->CreateShaderResourceView( tempTexture, nullptr, &mBrickTextureData.colorMap ) ) )
-		return E_FAIL;
-	// SPECULAR----------------------------------------------------------------------------------------------------------
-	if( FAILED( CreateDDSTextureFromFile( mDevice , L"Textures/Cobble/cobbleTexture_SPEC.DDS", (ID3D11Resource**)&tempTexture, nullptr ) ) )
-		return E_FAIL;
-	if( FAILED( mDevice->CreateShaderResourceView( tempTexture, nullptr, &mBrickTextureData.specularMap ) ) )
-		return E_FAIL;
-	// NORMAL------------------------------------------------------------------------------------------------------------
-	if( FAILED( CreateDDSTextureFromFile( mDevice , L"Textures/Cobble/cobbleTexture_NRM.DDS", (ID3D11Resource**)&tempTexture, nullptr ) ) )
-		return E_FAIL;
-	if( FAILED( mDevice->CreateShaderResourceView( tempTexture, nullptr, &mBrickTextureData.normalMap ) ) )
-		return E_FAIL;
-	// DISPLACEMENT------------------------------------------------------------------------------------------------------
-	if( FAILED( CreateDDSTextureFromFile( mDevice , L"Textures/Cobble/cobbleTexture2_DISP.DDS", (ID3D11Resource**)&tempTexture, nullptr ) ) )
-		return E_FAIL;
-	if( FAILED( mDevice->CreateShaderResourceView( tempTexture, nullptr, &mBrickTextureData.displacementMap ) ) )
-		return E_FAIL;
-	//-------------------------------------------------------------------------------------------------------------------
+	//// COLOR-------------------------------------------------------------------------------------------------------------
+	//if( FAILED( CreateDDSTextureFromFile( mDevice , L"Textures/Cobble/cobbleTexture_COLOR.DDS", (ID3D11Resource**)&tempTexture, nullptr ) ) )
+	//	return E_FAIL;
+	//if( FAILED( mDevice->CreateShaderResourceView( tempTexture, nullptr, &mBrickTextureData.colorMap ) ) )
+	//	return E_FAIL;
+	//// SPECULAR----------------------------------------------------------------------------------------------------------
+	//if( FAILED( CreateDDSTextureFromFile( mDevice , L"Textures/Cobble/cobbleTexture_SPEC.DDS", (ID3D11Resource**)&tempTexture, nullptr ) ) )
+	//	return E_FAIL;
+	//if( FAILED( mDevice->CreateShaderResourceView( tempTexture, nullptr, &mBrickTextureData.specularMap ) ) )
+	//	return E_FAIL;
+	//// NORMAL------------------------------------------------------------------------------------------------------------
+	//if( FAILED( CreateDDSTextureFromFile( mDevice , L"Textures/Cobble/cobbleTexture_NRM.DDS", (ID3D11Resource**)&tempTexture, nullptr ) ) )
+	//	return E_FAIL;
+	//if( FAILED( mDevice->CreateShaderResourceView( tempTexture, nullptr, &mBrickTextureData.normalMap ) ) )
+	//	return E_FAIL;
+	//// DISPLACEMENT------------------------------------------------------------------------------------------------------
+	//if( FAILED( CreateDDSTextureFromFile( mDevice , L"Textures/Cobble/cobbleTexture2_DISP.DDS", (ID3D11Resource**)&tempTexture, nullptr ) ) )
+	//	return E_FAIL;
+	//if( FAILED( mDevice->CreateShaderResourceView( tempTexture, nullptr, &mBrickTextureData.displacementMap ) ) )
+	//	return E_FAIL;
+	////-------------------------------------------------------------------------------------------------------------------
 
 
-	D3D11_SAMPLER_DESC saD;
+	/*D3D11_SAMPLER_DESC saD;
 	memset( &saD, 0, sizeof( saD ) );
 	saD.Filter			= D3D11_FILTER_MIN_MAG_MIP_LINEAR;
 	saD.AddressU		= D3D11_TEXTURE_ADDRESS_WRAP;
@@ -251,7 +269,7 @@ HRESULT Level::Initialize( ID3D11Device* device, ID3D11DeviceContext* deviceCont
 	saD.MaxLOD			= D3D11_FLOAT32_MAX;
 
 	if( FAILED( mDevice->CreateSamplerState( &saD, &mSamplerState ) ) )
-		return E_FAIL;
+		return E_FAIL;*/
 	//===============================================
 
 
@@ -295,10 +313,10 @@ void Level::Release()
 	SAFE_RELEASE( mInstanceBuffer );
 	//SAFE_RELEASE( mLightBuffer );
 
-	SAFE_RELEASE( mBrickTextureData.colorMap );
-	SAFE_RELEASE( mBrickTextureData.specularMap );
-	SAFE_RELEASE( mBrickTextureData.normalMap );
-	SAFE_RELEASE( mBrickTextureData.displacementMap );
+	//SAFE_RELEASE( mBrickTextureData.colorMap );
+	//SAFE_RELEASE( mBrickTextureData.specularMap );
+	//SAFE_RELEASE( mBrickTextureData.normalMap );
+	//SAFE_RELEASE( mBrickTextureData.displacementMap );
 
 	SAFE_RELEASE( mSamplerState );	
 

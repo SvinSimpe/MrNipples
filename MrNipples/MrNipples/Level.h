@@ -13,7 +13,7 @@ enum GeometryType
 {
 	BOX,
 	PLANE,
-	AMOUNT
+	NUM_GEOMETRY_TYPES
 };
 
 class Level
@@ -25,7 +25,7 @@ class Level
 		ID3D11Buffer*					mObjectVertexBuffer;
 		ID3D11Buffer*					mInstanceBuffer;
 
-		TextureData						mBrickTextureData;
+		//TextureData						mBrickTextureData;
 		ID3D11SamplerState*				mSamplerState;
 
 
@@ -42,6 +42,9 @@ class Level
 
 		HRESULT UpdateObjectVertexBuffer();
 		HRESULT UpdatePerInstanceBuffer();
+
+		HRESULT RenderOpaque( float deltaTime );
+		HRESULT RenderTransparent( float deltaTime );
 
 	public:
 		void	AddGeometry( XMFLOAT3 scale, XMFLOAT3 rotation, XMFLOAT3 translation, XMFLOAT3 color );

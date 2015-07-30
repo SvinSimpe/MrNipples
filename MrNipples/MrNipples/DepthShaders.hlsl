@@ -6,27 +6,13 @@ cbuffer CB_PER_FRAME : register(b0)
 {
 	matrix view;
 	matrix proj;
-	float3 eyePosition;
+	float4 eyePositionAndTessAmount;
 };
 
-cbuffer CB_DEPTH_LIGHT : register(b2)
+cbuffer CB_DEPTH_LIGHT : register(b1)
 {
-	matrix viewProj;
+	matrix worldViewProj;
 }
-
-struct PointLight
-{
-	float4	positionAndRadius;
-	float4	ambient;
-	float4	diffuse;
-	float4	specular;
-	float3	attenuation;
-};
-
-cbuffer CB_LIGHT : register(b1)
-{
-	PointLight	pointLight;
-};
 
 struct VertexIn // Pass through
 {
@@ -70,12 +56,8 @@ struct HullOut // Pass through
 struct DomainOut
 {
 	float4 position			: SV_POSITION;
-	float3 worldPosition	: WORLD_POSITION;
-	float3 normal			: NORMAL;
-	float2 texCoord			: TEXCOORD;
-	float3 tangent			: TANGENT;
-	float4 color			: COLOR;
 };
+
 
 Texture2D		displacementMap		: register(t0);
 SamplerState	samplerState		: register(s0);
@@ -121,7 +103,7 @@ HullConstantOut HSConstant( InputPatch<VertexOut, 3> patch, uint pid : SV_Primit
 
 	float3 centerW = mul( float4( centerL, 1.0f ), patch[0].world ).xyz;
 	
-	float d = distance( centerW, eyePosition );
+	float d = distance( centerW, eyePositionAndTessAmount.xyz );
 
 	// Tessellate the patch based on distance from the eye such that
 	// the tessellation is 0 if d >= d1 and 60 if d <= d0.  The interval
@@ -179,18 +161,18 @@ DomainOut DS( HullConstantOut input, float3 baryCoords : SV_DomainLocation, cons
 	
 	// Normal
 	float3 finalNormal = baryCoords.x * tri[0].normal + baryCoords.y * tri[1].normal + baryCoords.z * tri[2].normal;
-	output.normal = normalize( mul( float4( finalNormal, 0 ), tri[0].world ).xyz );
+	//output.normal = normalize( mul( float4( finalNormal, 0 ), tri[0].world ).xyz );
 
 	// Texture coordinate
 	float2 finalTex = baryCoords.x * tri[0].texCoord + baryCoords.y * tri[1].texCoord + baryCoords.z * tri[2].texCoord;
-	output.texCoord = finalTex;
+	//output.texCoord = finalTex;
 
 	// Tangent
-	float3 finalTangent	= baryCoords.x * tri[0].tangent + baryCoords.y * tri[1].tangent + baryCoords.z * tri[2].tangent;
-
+	/*float3 finalTangent	= baryCoords.x * tri[0].tangent + baryCoords.y * tri[1].tangent + baryCoords.z * tri[2].tangent;
+*/
 
 	// Sample the displacement map for the magnitude of displacement
-	float				displacement	= displacementMap.SampleLevel( samplerState, output.texCoord.xy, 0 ).r;
+	float				displacement	= displacementMap.SampleLevel( samplerState, finalTex.xy, 0 ).r;
 	//float				scalar = 0.025f;
 	displacement		*= 0.058f;
 	float3	direction	= finalNormal; // direction is opposite normal
@@ -201,11 +183,18 @@ DomainOut DS( HullConstantOut input, float3 baryCoords : SV_DomainLocation, cons
 
 	// transform to clip space
 	output.position			= mul( float4( worldPosition, 1.0f ), tri[0].world );
-	output.worldPosition	= output.position.xyz;
-	output.position			= mul( output.position, view );
-	output.position			= mul( output.position, proj );
-	output.tangent			= normalize( finalTangent );
-	output.color			= tri[0].color;
+	//output.worldPosition	= output.position.xyz;
+	//output.position		= mul( output.position, view );
+	//output.position		= mul( output.position, proj );
+	output.position			= mul( output.position, worldViewProj );
+	//output.tangent			= normalize( finalTangent );
+	//output.color			= tri[0].color;
     
     return output;    
+}
+
+
+void PS( DomainOut input )
+{
+
 }

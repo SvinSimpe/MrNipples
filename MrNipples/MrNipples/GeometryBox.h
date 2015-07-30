@@ -2,7 +2,7 @@
 #define _GEOMETRYBOX_H_
 
 #include "3DLibs.h"
-#include "Vertex48.h"
+#include "VertexLayout.h"
 
 const unsigned int BOX_VERTEX_COUNT = 36;
 
