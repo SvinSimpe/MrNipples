@@ -68,9 +68,9 @@ HRESULT Level::UpdatePerInstanceBuffer()
 	//for (size_t i = 0; i < mInstanceData.size(); i++)
 	//{
 	//	// Construct World matrix
-	//	XMStoreFloat4x4( &mInstanceData.at(i).world,  XMMatrixScaling( 10.0f, 10.0f, 10.0f ) *
+	//	XMStoreFloat4x4( &mInstanceData.at(i).world,  XMMatrixScaling( 5.0f, 5.0f, 5.0f ) *
 	//									   XMMatrixRotationRollPitchYaw( XMConvertToRadians( 0.0f ),
-	//																	 XMConvertToRadians( mRotation * ( (float)i * 400 ) ),
+	//																	 XMConvertToRadians( mRotation * ( (float)i * 40 ) ),
 	//																	 XMConvertToRadians( (float)i * 10.0f ) ) *
 	//									   XMMatrixTranslation( 0.0f, 0.0f, (float)i * 17.0f ) ) ;
 	//}
@@ -149,9 +149,6 @@ void Level::Update( float deltaTime )
 
 	if( FAILED( UpdatePerInstanceBuffer() ) )
 		OutputDebugStringA( "FAILED TO UPDATE PER INSTANCE BUFFER :: Level.cpp" );
-
-	//if( FAILED( UpdateLightBuffer() ) )
-	//	OutputDebugStringA( "FAILED TO UPDATE LIGHT BUFFER :: Level.cpp" );
 }
 
 void Level::Render( float deltaTime )
@@ -197,19 +194,54 @@ HRESULT Level::Initialize( ID3D11Device* device, ID3D11DeviceContext* deviceCont
 	mNumGeometryPerType[GeometryType::PLANE]	= 0;
 					
 	//=================GEOMETRY BOX===================
-	for ( size_t i = 0; i < 100; i++ )
-	{
-		float R = (float)(rand() % 255) * 0.00392f; // "Same" as divided by 255 but faster
-		float G = (float)(rand() % 255) * 0.00392f; //
-		float B = (float)(rand() % 255) * 0.00392f;	//
-		
-		AddGeometry( XMFLOAT3( 5.0f, 5.0f, 5.0f ),
-					 XMFLOAT3( 0.0f, 0.0f, (float)(i) * 5.0f ),
-					 XMFLOAT3( 0.0f , 0.0f, (float)i * 10.0f ),
-					 XMFLOAT3( R, G, B ) );
-		
-		mNumGeometryPerType[GeometryType::BOX]++;
-	}
+	//for ( size_t i = 0; i < 100; i++ )
+	//{
+	//	float R = (float)(rand() % 255) * 0.00392f; // "Same" as divided by 255 but faster
+	//	float G = (float)(rand() % 255) * 0.00392f; //
+	//	float B = (float)(rand() % 255) * 0.00392f;	//
+	//	
+	//	AddGeometry( XMFLOAT3( 5.0f, 5.0f, 5.0f ),
+	//				 XMFLOAT3( 0.0f, 0.0f, (float)(i) * 5.0f ),
+	//				 XMFLOAT3( 0.0f , 0.0f, (float)i * 10.0f ),
+	//				 XMFLOAT3( R, G, B ) );
+	//	
+	//	mNumGeometryPerType[GeometryType::BOX]++;
+	//}
+
+
+				// GIANT TEST
+
+				for ( size_t i = 0; i < 8; i++ )
+				{
+					float R = (float)(rand() % 255) * 0.00392f; // "Same" as divided by 255 but faster
+					float G = (float)(rand() % 255) * 0.00392f; //
+					float B = (float)(rand() % 255) * 0.00392f;	//
+					
+					AddGeometry( XMFLOAT3( 5.0f, 5.0f, 5.0f ),
+								 XMFLOAT3( 0.0f, 0.0f, 0.0f ),
+								 XMFLOAT3( -40.0f , -40.0f, -150.0f + (float)i * 50.0f ),
+								 XMFLOAT3( R, G, B ) );
+					
+					mNumGeometryPerType[GeometryType::BOX]++;
+				}
+
+
+				for ( size_t i = 0; i < 8; i++ )
+				{
+					float R = (float)(rand() % 255) * 0.00392f; // "Same" as divided by 255 but faster
+					float G = (float)(rand() % 255) * 0.00392f; //
+					float B = (float)(rand() % 255) * 0.00392f;	//
+					
+					AddGeometry( XMFLOAT3( 5.0f, 5.0f, 5.0f ),
+								 XMFLOAT3( 0.0f, 0.0f, 0.0f ),
+								 XMFLOAT3( 40.0f , -40.0f, -150.0f + (float)i * 50.0f ),
+								 XMFLOAT3( R, G, B ) );
+					
+					mNumGeometryPerType[GeometryType::BOX]++;
+				}
+				////
+
+
 	//================================================
 
 	//=================GEOMETRY PLANE===================
@@ -219,7 +251,7 @@ HRESULT Level::Initialize( ID3D11Device* device, ID3D11DeviceContext* deviceCont
 		float G = (float)(rand() % 255) * 0.00392f; //
 		float B = (float)(rand() % 255) * 0.00392f;	//
 		
-		AddGeometry( XMFLOAT3( 10.0f, 10.0f,  10.0f ),
+		AddGeometry( XMFLOAT3( 40.0f, 40.0f,  40.0f ),
 					 XMFLOAT3(  0.0f,  0.0f,  0.0f ),
 					 XMFLOAT3(  0.0f, -50.0f, 10.0f ),
 					 XMFLOAT3( R, G, B ) );
@@ -228,60 +260,12 @@ HRESULT Level::Initialize( ID3D11Device* device, ID3D11DeviceContext* deviceCont
 	}
 	//================================================
 
-					
-	//==================TEXTURE======================
-
-	//------------------BRICK----------------------
-	//ID3D11Texture2D* tempTexture = nullptr;
-
-	//// COLOR-------------------------------------------------------------------------------------------------------------
-	//if( FAILED( CreateDDSTextureFromFile( mDevice , L"Textures/Cobble/cobbleTexture_COLOR.DDS", (ID3D11Resource**)&tempTexture, nullptr ) ) )
-	//	return E_FAIL;
-	//if( FAILED( mDevice->CreateShaderResourceView( tempTexture, nullptr, &mBrickTextureData.colorMap ) ) )
-	//	return E_FAIL;
-	//// SPECULAR----------------------------------------------------------------------------------------------------------
-	//if( FAILED( CreateDDSTextureFromFile( mDevice , L"Textures/Cobble/cobbleTexture_SPEC.DDS", (ID3D11Resource**)&tempTexture, nullptr ) ) )
-	//	return E_FAIL;
-	//if( FAILED( mDevice->CreateShaderResourceView( tempTexture, nullptr, &mBrickTextureData.specularMap ) ) )
-	//	return E_FAIL;
-	//// NORMAL------------------------------------------------------------------------------------------------------------
-	//if( FAILED( CreateDDSTextureFromFile( mDevice , L"Textures/Cobble/cobbleTexture_NRM.DDS", (ID3D11Resource**)&tempTexture, nullptr ) ) )
-	//	return E_FAIL;
-	//if( FAILED( mDevice->CreateShaderResourceView( tempTexture, nullptr, &mBrickTextureData.normalMap ) ) )
-	//	return E_FAIL;
-	//// DISPLACEMENT------------------------------------------------------------------------------------------------------
-	//if( FAILED( CreateDDSTextureFromFile( mDevice , L"Textures/Cobble/cobbleTexture2_DISP.DDS", (ID3D11Resource**)&tempTexture, nullptr ) ) )
-	//	return E_FAIL;
-	//if( FAILED( mDevice->CreateShaderResourceView( tempTexture, nullptr, &mBrickTextureData.displacementMap ) ) )
-	//	return E_FAIL;
-	////-------------------------------------------------------------------------------------------------------------------
-
-
-	/*D3D11_SAMPLER_DESC saD;
-	memset( &saD, 0, sizeof( saD ) );
-	saD.Filter			= D3D11_FILTER_MIN_MAG_MIP_LINEAR;
-	saD.AddressU		= D3D11_TEXTURE_ADDRESS_WRAP;
-	saD.AddressV		= D3D11_TEXTURE_ADDRESS_WRAP;
-	saD.AddressW		= D3D11_TEXTURE_ADDRESS_WRAP;
-	saD.MipLODBias		= 0.0f;
-	saD.MaxAnisotropy	= 1;
-	saD.ComparisonFunc	= D3D11_COMPARISON_NEVER;
-	saD.MaxLOD			= D3D11_FLOAT32_MAX;
-
-	if( FAILED( mDevice->CreateSamplerState( &saD, &mSamplerState ) ) )
-		return E_FAIL;*/
-	//===============================================
-
-
 
 	if( FAILED( CreateVertexBuffer() ) )
 		return E_FAIL;
 
 	if( FAILED( CreatePerInstanceBuffer() ) )
 		return E_FAIL;
-	
-	//if( FAILED( CreateLightBuffer() ) )
-	//	return E_FAIL;
 
 	return S_OK;
 }
@@ -292,7 +276,6 @@ Level::Level()
 	mDeviceContext		= nullptr;
 	mObjectVertexBuffer	= nullptr;
 	mInstanceBuffer		= nullptr;
-	//mLightBuffer		= nullptr;
 	mSamplerState		= nullptr;
 	
 	mBox				= nullptr;
@@ -311,13 +294,6 @@ void Level::Release()
 {
 	SAFE_RELEASE( mObjectVertexBuffer );
 	SAFE_RELEASE( mInstanceBuffer );
-	//SAFE_RELEASE( mLightBuffer );
-
-	//SAFE_RELEASE( mBrickTextureData.colorMap );
-	//SAFE_RELEASE( mBrickTextureData.specularMap );
-	//SAFE_RELEASE( mBrickTextureData.normalMap );
-	//SAFE_RELEASE( mBrickTextureData.displacementMap );
-
 	SAFE_RELEASE( mSamplerState );	
 
 	mBox->Release();

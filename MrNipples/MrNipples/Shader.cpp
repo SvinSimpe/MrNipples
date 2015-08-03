@@ -144,6 +144,23 @@ Shader::Shader( ID3D11Device* device, ShaderDesc desc )
 		}
 	}
 
+	if( desc.hasGeometry )
+	{
+		//--------------------------
+		// Compile Geometry Shader |
+		//--------------------------
+		ID3DBlob* tgs = nullptr;
+
+		if( SUCCEEDED( hr = CompileShader( desc.shaderFile, "GS", "gs_5_0", nullptr, &tgs ) ) )
+		{
+			hr = device->CreateGeometryShader(  tgs->GetBufferPointer(),
+												tgs->GetBufferSize(),
+												nullptr,
+												&mGeometryShader );
+			tgs->Release();
+		}
+	}
+
 	if( desc.hasPixel )
 	{
 		//-----------------------

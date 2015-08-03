@@ -133,6 +133,7 @@
     <ClCompile Include="Application.cpp" />
     <ClCompile Include="AssetManager.cpp" />
     <ClCompile Include="Camera.cpp" />
+    <ClCompile Include="ShadowMapOmni.cpp" />
     <Text Include="DeferredPass.hlsl" />
     <ClCompile Include="Game.cpp" />
     <ClCompile Include="GBuffer.cpp" />
@@ -155,6 +156,7 @@
     <ClInclude Include="Level.h" />
     <ClInclude Include="Shader.h" />
     <ClInclude Include="ShadowMap.h" />
+    <ClInclude Include="ShadowMapOmni.h" />
     <ClInclude Include="VertexLayout.h" />
   </ItemGroup>
   <ItemGroup>
@@ -186,6 +188,11 @@
   </ItemGroup>
   <ItemGroup>
     <Text Include="GeometryPass.hlsl">
+      <FileType>Document</FileType>
+    </Text>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="DepthOmniShader.hlsl">
       <FileType>Document</FileType>
     </Text>
   </ItemGroup>

@@ -22,9 +22,9 @@ using namespace DirectX;
 ///---------------------------------------------------
 
 static const float CLEAR_COLOR_BLACK[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
-static const float CLEAR_COLOR_RED[4] = { 1.0f, 0.0f, 0.0f, 1.0f };
+static const float CLEAR_COLOR_RED[4]	= { 1.0f, 0.0f, 0.0f, 1.0f };
 static const float CLEAR_COLOR_GREEN[4] = { 0.0f, 1.0f, 0.0f, 1.0f };
-static const float CLEAR_COLOR_BLUE[4] = { 0.0f, 0.0f, 1.0f, 1.0f };
+static const float CLEAR_COLOR_BLUE[4]	= { 0.0f, 0.0f, 1.0f, 1.0f };
 
 struct PerInstanceData // 80 byte
 {
@@ -39,9 +39,10 @@ struct PerFrameData // 152 byte
 	XMFLOAT4			eyePositionAndTessAmount;
 };
 
-struct DepthLightData // 16 byte
+struct DepthLightData // 112 byte
 {
-	XMFLOAT4X4 worldViewProjection;
+	XMFLOAT4X4	lightViewProjection[6];
+	XMFLOAT4	lightPositionAndRadius;
 };
 
 struct PointLightData // 144 byte

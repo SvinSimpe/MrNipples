@@ -2,6 +2,7 @@
 #define _GAME_H_
 
 #include "3DLibs.h"
+#include "ShadowMapOmni.h"
 #include "ShadowMap.h"
 #include "Level.h"
 #include "Camera.h"
@@ -37,6 +38,7 @@ class Game
 		int								mDirection;		// TEMPORARY FOR MOVING LIGHT!
 
 		// Shadow
+		ShadowMapOmni*				mShadowMapOmni;
 		ShadowMap*					mShadowMap;
 		DepthLightData				mDepthLightData;
 		ID3D11Buffer*				mDepthLightCBuffer;
@@ -64,6 +66,7 @@ class Game
 		HRESULT UpdateDepthLightCBuffer();
 
 	public:
+		HRESULT RenderShadowOmniPass( float deltaTime );
 		HRESULT RenderStandard( float deltaTime );		// Forward rendering with tesselation
 		HRESULT RenderGeometryPass( float deltaTime );
 		HRESULT RenderShadowPass( float deltaTime );

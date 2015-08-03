@@ -73,12 +73,15 @@ struct DomainOut
 	float4 color			: COLOR;
 };
 
-Texture2D		displacementMap		: register(t0);
-Texture2D		colorMap			: register(t1);
-Texture2D		specularMap			: register(t2);
-Texture2D		normalMap			: register(t3);
-Texture2D		shadowMap			: register(t4);
-SamplerState	samplerState		: register(s0);
+Texture2D		displacementMap		: register( t0 );
+Texture2D		colorMap			: register( t1 );
+Texture2D		specularMap			: register( t2 );
+Texture2D		normalMap			: register( t3 );
+
+TextureCube		omniShadowMap		: register( t4 );
+
+SamplerState			samplerState		: register( s0 );
+SamplerComparisonState	omniShadowSampler	: register( s1 );
 
 
 //=================
@@ -126,15 +129,14 @@ HullConstantOut HSConstant( InputPatch<VertexOut, 3> patch, uint pid : SV_Primit
 	// Tessellate the patch based on distance from the eye such that
 	// the tessellation is 0 if d >= d1 and 60 if d <= d0.  The interval
 	// [d0, d1] defines the range we tessellate in.
-	const float d1 = 320.0f;
+	const float d1 = 300.0f;
 	const float d0 = 100.0f;	
-	//float tess = 16*saturate( ( d1-d ) / ( d1-d0 ) );
 	float tess = eyePositionAndTessAmount.w * saturate( ( d1-d ) / ( d1-d0 ) );
 
 
 	// Tessellation rate/speed
-	//if( tess <= 1.0f)
-	//	tess = 1.0f;
+	if( tess <= 1.0f)
+		tess = 1.0f;
 
 	// If amount of tesselation is 0.0f it means that user has chosen the 
 	/*if( eyePositionAndTessAmount.w == 1.0f )
@@ -223,16 +225,10 @@ DomainOut DS( HullConstantOut input, float3 baryCoords : SV_DomainLocation, cons
 //=================
 float4 PS( DomainOut input ) : SV_Target
 {
-
-	//return float4( shadowMap.Sample( samplerState, input.texCoord ).xyz, 1.0f );
+	bool BABY_MODE = true;
 
 	// Calculate Binormal
 	float3 binormal = cross( input.normal, input.tangent );
-
-	//// Get the normal
-	//float3 sampledNormal = 2 * normalMap.Sample( samplerState, input.texCoord ).xyz - 1;
-	//float3 normal = normalize( input.normal + ( sampledNormal.x * input.tangent ) + ( sampledNormal.y * binormal ) );
-
 	
 	// Sample normal and transform from tangent space to world space
 	float3 sampledNormal = 2 * normalMap.Sample( samplerState, input.texCoord ).xyz - 1;
@@ -243,70 +239,96 @@ float4 PS( DomainOut input ) : SV_Target
 	float3x3 TBN = float3x3( T, B, N );
 
 	float3 normal = mul( sampledNormal, TBN );
-	//==========================
 
-	/*return float4( normal, 1.0f );*/
-
-
-
-	//						LIGHTING
-	///====================================================
+	//===================================================
+	//					  LIGHTING						|
+	//===================================================
 	float3  finalDiffuse	= float3( 0.01f, 0.01f, 0.01f );
 	float3	lightVec		= pointLight.positionAndRadius.xyz - input.worldPosition;
+	float3	lightVec2		= input.worldPosition - pointLight.positionAndRadius.xyz ;
 	float	lightVecLength	= length( lightVec );
 	
-	if( lightVecLength > pointLight.positionAndRadius.w )
-		return float4( finalDiffuse * colorMap.Sample( samplerState, input.texCoord ).xyz, 1.0f );
+
+	if( BABY_MODE )
+	{
+		if( lightVecLength > pointLight.positionAndRadius.w )
+			return float4( finalDiffuse * input.color.xyz, 1.0f );
+	}
+	else
+	{
+		if( lightVecLength > pointLight.positionAndRadius.w )
+			return float4( finalDiffuse * colorMap.Sample( samplerState, input.texCoord ).xyz, 1.0f );
+	}
 		
 
 	
 	lightVec /= lightVecLength;
-	float diffuseFactor = saturate( dot( lightVec, normal ) );		
+	float diffuseFactor = 0.0f;
+
+	if( BABY_MODE )
+		diffuseFactor = saturate( dot( lightVec, input.normal ) );	// USE NORMAL FROM INPUT
+	else
+		diffuseFactor = saturate( dot( lightVec, normal ) );	// USE NORMAL MAP SAMPLE
+
 
 	float finalAtt	= 1.0f / (	pointLight.attenuation[0] + pointLight.attenuation[1] *
 								lightVecLength + pointLight.attenuation[2] *
 								lightVecLength * lightVecLength );
 
-	finalDiffuse	= diffuseFactor * pointLight.diffuse.xyz  /* * input.color; */  * colorMap.Sample( samplerState, input.texCoord ).xyz;
-	finalDiffuse	*= finalAtt;
+	if( BABY_MODE )
+		finalDiffuse	= diffuseFactor * pointLight.diffuse.xyz * input.color.xyz; 
+	else
+		finalDiffuse	= diffuseFactor * pointLight.diffuse.xyz * colorMap.Sample( samplerState, input.texCoord ).xyz;
 
-	float4 finalSpecular = float4( finalDiffuse * specularMap.Sample( samplerState, input.texCoord ).xyz, 1.0f );
+	finalDiffuse *= finalAtt;
+	float4 finalSpecular = float4( 0.0f, 0.0f, 0.0f, 0.0f );
+
+	if( !BABY_MODE )
+		finalSpecular = float4( finalDiffuse * specularMap.Sample( samplerState, input.texCoord ).xyz, 1.0f );
 
 
-	// COMMON LIGHTING
-	//return float4( finalDiffuse + finalSpecular.xyz , 1.0f );
+
+	// OMNI SHADOW
+	float depthBias = 0.009f;
+	float shadowFactor = omniShadowMap.SampleCmp( omniShadowSampler, -lightVec, lightVecLength / pointLight.positionAndRadius.w - depthBias );	
+
+	if( shadowFactor == 0.0f )
+		shadowFactor = 0.5f;
+
+
+	return float4( ( finalDiffuse + finalSpecular.xyz  ) * shadowFactor , 1.0f );
 	///====================================================
 
 	// SHADOW MAPPING
 
 
-	// ta världsposition och mul med lights VP-matris för att hamna i hom.clip space
-	float4 posLight = mul( float4( input.worldPosition, 1.0f ), worldViewProj );
+	//// ta världsposition och mul med lights VP-matris för att hamna i hom.clip space
+	//float4 posLight = mul( float4( input.worldPosition, 1.0f ), worldViewProj );
 
-	//Eftersom vi saknar SV_Position som gör detta per auto
-	posLight.xy /= posLight.w; 
+	////Eftersom vi saknar SV_Position som gör detta per auto
+	//posLight.xy /= posLight.w; 
 
-	// Vi befinner oss nu i (-1,-1)-(1,1)-koordinatsystem medan vår ShadowMap är i (0,1)-(1,1)-koordinatsystem
-	float2 shadowMapTex = float2( posLight.x * 0.5f, posLight.y * -0.5f ) + 0.5f;
+	//// Vi befinner oss nu i (-1,-1)-(1,1)-koordinatsystem medan vår ShadowMap är i (0,1)-(1,1)-koordinatsystem
+	//float2 shadowMapTex = float2( posLight.x * 0.5f, posLight.y * -0.5f ) + 0.5f;
 
-	float depth = posLight.z / posLight.w;
+	//float depth = posLight.z / posLight.w;
 
-	float shadowBias = 0.002f;
+	//float shadowBias = 0.002f;
 
-	float dx = 1.0f / 1280.0f;
-	float dy = 1.0f / 720.0f;
+	//float dx = 1.0f / 1280.0f;
+	//float dy = 1.0f / 720.0f;
 
-	float s0 = ( shadowMap.Sample( samplerState, shadowMapTex).r + shadowBias < depth)? 0.2f : 1.0f;// om sann 0,0f, annars 1.0f
-	float s1 = ( shadowMap.Sample( samplerState, shadowMapTex + float2( dx,   0.0f ) ).r + shadowBias < depth )? 0.2f : 1.0f;// om sann 0,0f, annars 1.0f
-	float s2 = ( shadowMap.Sample( samplerState, shadowMapTex + float2( 0.0f, dy   ) ).r + shadowBias < depth )? 0.2f : 1.0f;// om sann 0,0f, annars 1.0f
-	float s3 = ( shadowMap.Sample( samplerState, shadowMapTex + float2( dx,   dy   ) ).r + shadowBias < depth )? 0.2f : 1.0f;// om sann 0,0f, annars 1.0f
+	//float s0 = ( shadowMap.Sample( samplerState, shadowMapTex).r + shadowBias < depth)? 0.2f : 1.0f;// om sann 0,0f, annars 1.0f
+	//float s1 = ( shadowMap.Sample( samplerState, shadowMapTex + float2( dx,   0.0f ) ).r + shadowBias < depth )? 0.2f : 1.0f;// om sann 0,0f, annars 1.0f
+	//float s2 = ( shadowMap.Sample( samplerState, shadowMapTex + float2( 0.0f, dy   ) ).r + shadowBias < depth )? 0.2f : 1.0f;// om sann 0,0f, annars 1.0f
+	//float s3 = ( shadowMap.Sample( samplerState, shadowMapTex + float2( dx,   dy   ) ).r + shadowBias < depth )? 0.2f : 1.0f;// om sann 0,0f, annars 1.0f
 
-	float2 texelPos = float2( shadowMapTex.x * 1280.0f, shadowMapTex.y * 720.0f );
-	float2 lerps = frac( texelPos );
+	//float2 texelPos = float2( shadowMapTex.x * 1280.0f, shadowMapTex.y * 720.0f );
+	//float2 lerps = frac( texelPos );
 
-	// Är 
-	float shadowLerp = lerp( lerp( s0, s1, lerps.x ), 
-					   lerp( s2, s3, lerps.x ), lerps.y );
+	//// Är 
+	//float shadowLerp = lerp( lerp( s0, s1, lerps.x ), 
+	//				   lerp( s2, s3, lerps.x ), lerps.y );
 
-	return float4( finalDiffuse , 1.0f );
+	//return float4( finalDiffuse , 1.0f );
 }

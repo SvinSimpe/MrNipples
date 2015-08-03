@@ -8,20 +8,20 @@ void Application::Render( float deltaTime )
 
 	mDeviceContext->ClearRenderTargetView( mRenderTargetView, CLEAR_COLOR_BLUE );
 
-	//// Clear Depth Buffer
+	// Clear Depth Buffer
 	mDeviceContext->ClearDepthStencilView( mDepthStencilView, D3D11_CLEAR_DEPTH, 1.0f, 0 );
 
-	//// Set Render target
+	// Set Render target
 	mDeviceContext->OMSetRenderTargets( 1, &mRenderTargetView, mDepthStencilView );
 
 	//Draw Game here
+	mGame->RenderShadowOmniPass( deltaTime );
+	SetViewPort();
 	mGame->RenderStandard( deltaTime );
 	//mGame->RenderGeometryPass( deltaTime );
 	//mGame->RenderShadowPass( deltaTime );
 	//SetViewPort();
 	//mGame->RenderDeferredPass( deltaTime );
-
-	//mGame->Render( deltaTime );
 
 	// Swap Front and Back Buffer
 	mSwapChain->Present( 0, 0 );
@@ -440,7 +440,6 @@ int Application::Run()
 			Render( deltaTime );
 
 			prevTimeStamp = currTimeStamp;
-
 		}
 	}
 

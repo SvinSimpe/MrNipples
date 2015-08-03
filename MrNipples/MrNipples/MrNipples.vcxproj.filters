@@ -51,6 +51,9 @@
     <ClCompile Include="AssetManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="ShadowMapOmni.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Application.h">
@@ -89,6 +92,9 @@
     <ClInclude Include="VertexLayout.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="ShadowMapOmni.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Text Include="DepthShaders.hlsl">
@@ -101,6 +107,9 @@
       <Filter>Resource Files</Filter>
     </Text>
     <Text Include="SimpleShader.hlsl">
+      <Filter>Resource Files</Filter>
+    </Text>
+    <Text Include="DepthOmniShader.hlsl">
       <Filter>Resource Files</Filter>
     </Text>
   </ItemGroup>

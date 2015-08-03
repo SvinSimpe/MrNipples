@@ -45,27 +45,33 @@ HRESULT Game::InitializeShaders()
 {
 	// STANDARD SHADER
 	ShaderDesc shaderDesc;
-	shaderDesc.shaderFile	= "SimpleShader.hlsl";
-	shaderDesc.hasHull		= true;
-	shaderDesc.hasDomain	= true;
-	mShaders[0]				= new Shader( mDevice, shaderDesc );
+	shaderDesc.shaderFile			= "SimpleShader.hlsl";
+	shaderDesc.hasHull				= true;
+	shaderDesc.hasDomain			= true;
+	mShaders[ShaderType::STANDARD]	= new Shader( mDevice, shaderDesc );
 
 	// GEOMETRY PASS SHADER
-	shaderDesc.shaderFile	= "GeometryPass.hlsl";
-	mShaders[1]				= new Shader( mDevice, shaderDesc );
+	shaderDesc.shaderFile				= "GeometryPass.hlsl";
+	mShaders[ShaderType::GEOMETRY_PASS]	= new Shader( mDevice, shaderDesc );
 
 	// DEPTH SHADER
-	shaderDesc.shaderFile	= "DepthShaders.hlsl";
-	shaderDesc.hasPixel		= true;
-	mShaders[2]				= new Shader( mDevice, shaderDesc );
+	shaderDesc.shaderFile		= "DepthShaders.hlsl";
+	shaderDesc.hasPixel			= true;
+	mShaders[ShaderType::DEPTH]	= new Shader( mDevice, shaderDesc );
+
+	// DEPTH SHADER OMNI
+	shaderDesc.shaderFile				= "DepthOmniShader.hlsl";
+	shaderDesc.hasGeometry				= true;
+	mShaders[ShaderType::DEPTH_OMNI]	= new Shader( mDevice, shaderDesc );
 
 	// DEFERRED PASS SHADER
-	shaderDesc.shaderFile		= "DeferredPass.hlsl";
-	shaderDesc.hasHull			= false;
-	shaderDesc.hasDomain		= false;
-	shaderDesc.hasPixel			= true;
-	shaderDesc.inputLayoutType	= InputLayoutType::VERTEX32;
-	mShaders[3]					= new Shader( mDevice, shaderDesc );
+	shaderDesc.shaderFile				= "DeferredPass.hlsl";
+	shaderDesc.hasHull					= false;
+	shaderDesc.hasDomain				= false;
+	shaderDesc.hasGeometry				= false;
+	shaderDesc.hasPixel					= true;
+	shaderDesc.inputLayoutType			= InputLayoutType::VERTEX32;
+	mShaders[ShaderType::DEFERRED_PASS]	= new Shader( mDevice, shaderDesc );
 
 	return S_OK;
 }
@@ -227,12 +233,13 @@ HRESULT Game::UpdateLightBuffer()
 {
 	HRESULT hr = S_OK;
 	
-	float zMin = -50.0f;
-	float zMax = 300.0f;
+	float zMin	= -100.0f;
+	float zMax	= 50.0f;
+	float speed = 0.015f;
 
 	if( mPointLightData.at(0).positionAndRadius.z < zMax && mDirection == 1 )
 	{
-		XMStoreFloat4x4( &mPointLightData.at(0).world, XMMatrixIdentity() * XMMatrixIdentity() * XMMatrixTranslation( 0.0f, 0.0f, 0.005f ) );
+		XMStoreFloat4x4( &mPointLightData.at(0).world, XMMatrixIdentity() * XMMatrixIdentity() * XMMatrixTranslation( 0.0f, 0.0f, speed ) );
 
 		XMVECTOR oldLightPosition = XMVectorSet( mPointLightData.at(0).positionAndRadius.x,
 												 mPointLightData.at(0).positionAndRadius.y,
@@ -252,7 +259,7 @@ HRESULT Game::UpdateLightBuffer()
 
 	if( mPointLightData.at(0).positionAndRadius.z > zMin && mDirection == 0 )
 	{
-		XMStoreFloat4x4( &mPointLightData.at(0).world, XMMatrixIdentity() * XMMatrixIdentity() * XMMatrixTranslation( 0.0f, 0.0f, -0.005f ) );
+		XMStoreFloat4x4( &mPointLightData.at(0).world, XMMatrixIdentity() * XMMatrixIdentity() * XMMatrixTranslation( 0.0f, 0.0f, -speed ) );
 	
 		XMVECTOR oldLightPosition = XMVectorSet( mPointLightData.at(0).positionAndRadius.x,
 												 mPointLightData.at(0).positionAndRadius.y,
@@ -293,32 +300,193 @@ HRESULT Game::UpdateLightBuffer()
 	return hr;
 }
 
-HRESULT Game::UpdateDepthLightCBuffer()
+//HRESULT Game::UpdateDepthLightCBuffer()
+//{
+//	HRESULT hr = S_OK;
+//
+//	/*
+//		Creating a virtual camera that is placed, for each light, and its position
+//	*/
+//	XMFLOAT3 position		= XMFLOAT3( mPointLightData.at(0).positionAndRadius.x, mPointLightData.at(0).positionAndRadius.y, mPointLightData.at(0).positionAndRadius.z );
+//	XMFLOAT3 focusPosition	= XMFLOAT3( 0.0f, 0.0f, 0.0f );
+//	XMFLOAT3 upDirection	= XMFLOAT3( 0.0f, 1.0f, 0.0f );
+//	XMMATRIX view = XMMatrixLookAtLH(	XMLoadFloat3( &position ),
+//										XMLoadFloat3( &focusPosition ),
+//										XMLoadFloat3( &upDirection ) );
+//
+//	// For shadow maps the field view must be 90 degrees
+//	XMMATRIX projection = XMMatrixPerspectiveFovLH( PI * 0.5f, 1.0f, 0.5f, 5000.0f );
+//
+//	XMMATRIX world = XMMatrixIdentity();// XMLoadFloat4x4( &mPointLightData.at(0).world );
+//
+//	XMStoreFloat4x4( &mDepthLightData.lightViewProjection, XMMatrixTranspose( view * projection ) );
+//
+//	D3D11_MAPPED_SUBRESOURCE mappedResource;
+//	hr = mDeviceContext->Map( mDepthLightCBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource );
+//
+//	if( SUCCEEDED( hr ) )
+//	{
+//		memcpy( mappedResource.pData, &mDepthLightData, sizeof(mDepthLightData) );	
+//		mDeviceContext->Unmap( mDepthLightCBuffer, 0 );
+//
+//		mDeviceContext->DSSetConstantBuffers( 1, 1, &mDepthLightCBuffer );
+//	}
+//
+//	return hr;
+//}
+
+HRESULT Game::RenderShadowOmniPass( float deltaTime )
 {
 	HRESULT hr = S_OK;
 
-	XMFLOAT3 position		= XMFLOAT3( mPointLightData.at(0).positionAndRadius.x, mPointLightData.at(0).positionAndRadius.y, mPointLightData.at(0).positionAndRadius.z );
-	XMFLOAT3 focusPosition	= XMFLOAT3( 0.0f, 0.0f, 0.0f );
-	XMFLOAT3 upDirection	= XMFLOAT3( 0.0f, 1.0f, 0.0f );
-	XMMATRIX view = XMMatrixLookAtLH(	XMLoadFloat3( &position ),
-										XMLoadFloat3( &focusPosition ),
-										XMLoadFloat3( &upDirection ) );
+	// Change to Shadow Map Viewport & disable color writes
+	mShadowMapOmni->BindDsvAndSetNullRenderTarget( mDeviceContext );
 
-	XMMATRIX projection = XMMatrixPerspectiveFovLH( 0.75f, 1280.0f / 720.0f, 0.5f, 5000.0f );
+	// Set sampler state
+	mDeviceContext->DSSetSamplers( 0, 1, &mSamplerState );
 
-	XMMATRIX world = XMMatrixIdentity();// XMLoadFloat4x4( &mPointLightData.at(0).world );
+	// Set vertex description
+	mDeviceContext->IASetInputLayout( mShaders[ShaderType::DEPTH_OMNI]->GetInputLayout() );
 
-	XMStoreFloat4x4( &mDepthLightData.worldViewProjection, XMMatrixTranspose( world * view * projection ) );
+	// Set topology
+	mDeviceContext->IASetPrimitiveTopology( D3D11_PRIMITIVE_TOPOLOGY_3_CONTROL_POINT_PATCHLIST );
 
-	D3D11_MAPPED_SUBRESOURCE mappedResource;
-	hr = mDeviceContext->Map( mDepthLightCBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource );
+	//Set shader stages
+	mDeviceContext->VSSetShader( mShaders[ShaderType::DEPTH_OMNI]->GetVertexShader(),	nullptr, 0 );
+	mDeviceContext->HSSetShader( mShaders[ShaderType::DEPTH_OMNI]->GetHullShader(),		nullptr, 0 );
+	mDeviceContext->DSSetShader( mShaders[ShaderType::DEPTH_OMNI]->GetDomainShader(),	nullptr, 0 );
+	mDeviceContext->GSSetShader( mShaders[ShaderType::DEPTH_OMNI]->GetGeometryShader(), nullptr, 0 );
+	mDeviceContext->PSSetShader( mShaders[ShaderType::DEPTH_OMNI]->GetPixelShader(),	nullptr, 0 );
 
-	if( SUCCEEDED( hr ) )
+	for (size_t i = 0; i < mPointLightData.size(); i++)
 	{
-		memcpy( mappedResource.pData, &mDepthLightData, sizeof(mDepthLightData) );	
-		mDeviceContext->Unmap( mDepthLightCBuffer, 0 );
+		/*
+			Render scene into the the shadow map texture cube for each light
 
-		mDeviceContext->DSSetConstantBuffers( 1, 1, &mDepthLightCBuffer );
+			Creating a virtual camera that is placed, for each light, and its position
+			as well as setting the view vector to x, -x, y, -y, z, -z changing each pass.
+
+			Initialize virtual camera to render positive x face first
+		
+		*/
+
+		D3D11_MAPPED_SUBRESOURCE mappedResource;
+		hr = mDeviceContext->Map( mDepthLightCBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource );
+
+		if( SUCCEEDED( hr ) )
+		{
+			// Set position and radius for each light
+			mDepthLightData.lightPositionAndRadius = mPointLightData.at(i).positionAndRadius;
+			
+			//==================================== POSITIVE X-FACE ==========================================
+
+			XMFLOAT3 position		= XMFLOAT3( mPointLightData.at(i).positionAndRadius.x,
+												mPointLightData.at(i).positionAndRadius.y,
+												mPointLightData.at(i).positionAndRadius.z );
+
+			XMVECTOR xmPosition = XMLoadFloat3( &position );
+		
+			XMFLOAT3 focusPosition	= XMFLOAT3( 0.0f, 0.0f, 0.0f );
+			XMStoreFloat3( &focusPosition, xmPosition + XMVectorSet( 10.f, 0.0f, 0.0f, 0.0f ) );
+
+			XMFLOAT3 upDirection	= XMFLOAT3( 0.0f, 1.0f, 0.0f );
+			XMMATRIX view = XMMatrixLookAtLH(	XMLoadFloat3( &position ),
+												XMLoadFloat3( &focusPosition ),
+												XMLoadFloat3( &upDirection ) );
+
+			// For shadow maps the field view must be 90 degrees
+			//XMMATRIX projection = XMMatrixPerspectiveFovLH( PI * 0.5f, 1.0f, 0.5f, 5000.0f );  // TEST changing FAR PLANE to light radius
+			XMMATRIX projection = XMMatrixPerspectiveFovLH( PI * 0.5f, 1.0f, 0.5f, mPointLightData.at(i).positionAndRadius.w );  // TEST changing FAR PLANE to light radius
+
+			XMMATRIX world = XMMatrixIdentity();
+
+			XMStoreFloat4x4( &mDepthLightData.lightViewProjection[0], XMMatrixTranspose( view * projection ) ); // Repeat this for each face in texture cube
+
+			//===============================================================================================
+
+
+			//==================================== NEGATIVE X-FACE ==========================================
+
+
+			XMStoreFloat3( &focusPosition, xmPosition + XMVectorSet( -10.f, 0.0f, 0.0f, 0.0f ) );
+
+			view = XMMatrixLookAtLH( XMLoadFloat3( &position ),
+									 XMLoadFloat3( &focusPosition ),
+									 XMLoadFloat3( &upDirection ) );
+
+			XMStoreFloat4x4( &mDepthLightData.lightViewProjection[1], XMMatrixTranspose( view * projection ) );
+
+			//===============================================================================================
+
+
+			//==================================== POSITIVE Y-FACE ==========================================
+
+			XMStoreFloat3( &focusPosition, xmPosition + XMVectorSet( 0.0f, 10.f, 0.0f, 0.0f ) );
+
+			upDirection	= XMFLOAT3( 0.0f, 0.0f, -1.0f );
+
+			view = XMMatrixLookAtLH( XMLoadFloat3( &position ),
+									 XMLoadFloat3( &focusPosition ),
+									 XMLoadFloat3( &upDirection ) );
+
+			XMStoreFloat4x4( &mDepthLightData.lightViewProjection[2], XMMatrixTranspose( view * projection ) );
+
+			//===============================================================================================
+
+
+			//==================================== NEGATIVE Y-FACE ==========================================
+
+			XMStoreFloat3( &focusPosition, xmPosition + XMVectorSet( 0.0f, -10.f, 0.0f, 0.0f ) );
+
+			upDirection	= XMFLOAT3( 0.0f, 0.0f, 1.0f );
+
+			view = XMMatrixLookAtLH( XMLoadFloat3( &position ),
+									 XMLoadFloat3( &focusPosition ),
+									 XMLoadFloat3( &upDirection ) );
+
+			XMStoreFloat4x4( &mDepthLightData.lightViewProjection[3], XMMatrixTranspose( view * projection ) );
+
+			//===============================================================================================
+
+
+			//==================================== POSITIVE Z-FACE ==========================================
+
+			XMStoreFloat3( &focusPosition, xmPosition + XMVectorSet( 0.0f, 0.0f, 10.f, 0.0f ) );
+
+			upDirection	= XMFLOAT3( 0.0f, 1.0f, 0.0f );
+
+			view = XMMatrixLookAtLH( XMLoadFloat3( &position ),
+									 XMLoadFloat3( &focusPosition ),
+									 XMLoadFloat3( &upDirection ) );
+
+			XMStoreFloat4x4( &mDepthLightData.lightViewProjection[4], XMMatrixTranspose( view * projection ) );
+
+			//===============================================================================================
+
+
+			//==================================== NEGATIVE Z-FACE ==========================================
+
+			XMStoreFloat3( &focusPosition, xmPosition + XMVectorSet( 0.0f, 0.0f, -10.f, 0.0f ) );
+
+			view = XMMatrixLookAtLH( XMLoadFloat3( &position ),
+									 XMLoadFloat3( &focusPosition ),
+									 XMLoadFloat3( &upDirection ) );
+
+			XMStoreFloat4x4( &mDepthLightData.lightViewProjection[5], XMMatrixTranspose( view * projection ) );
+
+			//===============================================================================================
+			
+
+			memcpy( mappedResource.pData, &mDepthLightData, sizeof(mDepthLightData) );	
+			mDeviceContext->Unmap( mDepthLightCBuffer, 0 );
+
+			mDeviceContext->DSSetConstantBuffers( 1, 1, &mDepthLightCBuffer );
+			mDeviceContext->GSSetConstantBuffers( 1, 1, &mDepthLightCBuffer );
+			mDeviceContext->PSSetConstantBuffers( 1, 1, &mDepthLightCBuffer );
+		}
+
+		mLevel->Render( deltaTime );	
+
 	}
 
 	return hr;
@@ -326,9 +494,6 @@ HRESULT Game::UpdateDepthLightCBuffer()
 
 HRESULT Game::RenderStandard( float deltaTime )
 {
-	RenderShadowPass( deltaTime );
-
-
 	mDeviceContext->ClearRenderTargetView( mRenderTargetView, CLEAR_COLOR_BLACK );
 
 	// Clear Depth Buffer
@@ -369,9 +534,10 @@ HRESULT Game::RenderStandard( float deltaTime )
 	mDeviceContext->DSSetSamplers( 0, 1, &mSamplerState );
 	mDeviceContext->PSSetSamplers( 0, 1, &mSamplerState );
 
-	//TEST
-	ID3D11ShaderResourceView* shadowView = mShadowMap->ShaderResourceView();
-	mDeviceContext->PSSetShaderResources( 4, 1, &shadowView );
+	// Set Omni-directional Shadow Map 
+	mShadowMapOmni->SetShadowRenderTargetViews( mDeviceContext, 4 );
+	ID3D11SamplerState* shadowSampler = mShadowMapOmni->GetShadowMapSampler();
+	mDeviceContext->PSSetSamplers( 1, 1, &shadowSampler );
 
 	// Render Level
 	mLevel->Render( deltaTime );
@@ -455,7 +621,7 @@ HRESULT Game::RenderShadowPass( float deltaTime )
 	mDeviceContext->DSSetSamplers( 0, 1, &mSamplerState );
 
 	// Depth Light Buffer
-	UpdateDepthLightCBuffer();
+	//UpdateDepthLightCBuffer();
 
 	mLevel->Render( deltaTime );
 
@@ -503,8 +669,8 @@ HRESULT Game::RenderDeferredPass( float deltaTime )
 	if( FAILED( UpdateLightBuffer() ) )
 		OutputDebugStringA( "FAILED TO UPDATE LIGHT BUFFER :: Game.cpp" );
 
-	if( FAILED( UpdateDepthLightCBuffer() ) )
-		OutputDebugStringA( "FAILED TO UPDATE DEPTH LIGHT CONSTANT BUFFER :: Game.cpp" );
+	//if( FAILED( UpdateDepthLightCBuffer() ) )
+	//	OutputDebugStringA( "FAILED TO UPDATE DEPTH LIGHT CONSTANT BUFFER :: Game.cpp" );
 
 	mDeviceContext->PSSetConstantBuffers( 1, 1, &mLightBuffer );
 	mDeviceContext->PSSetConstantBuffers( 2, 1, &mDepthLightCBuffer );
@@ -587,7 +753,7 @@ HRESULT Game::Initialize( ID3D11Device* device, ID3D11DeviceContext* deviceConte
 	mDeviceContext		= deviceContext;
 	mRenderTargetView	= renderTargetView;
 	mAssetManager		= new AssetManager();
-	mShadowMap			= new ShadowMap( device, 1280, 720 );
+	mShadowMapOmni		= new ShadowMapOmni(); 
 	mTesselationAmount	= 1.0f;
 
 	//============================ Create GBuffers ===============================
@@ -609,7 +775,10 @@ HRESULT Game::Initialize( ID3D11Device* device, ID3D11DeviceContext* deviceConte
 	mDirection = 1;
 
 	PointLightData light;
-	light.positionAndRadius = XMFLOAT4( -40.0f, 20.0f, 50.0f, 350.0f );
+	light.positionAndRadius = XMFLOAT4( 0.0f, 20.0f, -150.0f, 550.0f ); // TEST POSITION
+	/*light.positionAndRadius = XMFLOAT4( 0.0f, 10.0f, -25.0f, 350.0f );*/
+	//light.positionAndRadius = XMFLOAT4( 0.0f, 10.0f, -15.0f, 350.0f ); // BEAUTIFUL LIGHTING <3
+	/*light.positionAndRadius = XMFLOAT4( -40.0f, 20.0f, 50.0f, 350.0f );*/
 	light.ambient			= XMFLOAT4( 2.0f, 6.0f, 8.0f, 1.0f );
 	light.diffuse			= XMFLOAT4( 0.85f, 0.85f, 1.0f, 1.0f );
 	light.specular			= XMFLOAT4( 1.0f, 1.0f, 1.0f, 1.0f );
@@ -621,7 +790,7 @@ HRESULT Game::Initialize( ID3D11Device* device, ID3D11DeviceContext* deviceConte
 	////---------------------------------------------------------------------------------------------
 
 	//PointLightData light2;
-	//light2.positionAndRadius	= XMFLOAT4( 80.0f, 10.0f, 100.0f, 350.0f );
+	//light2.positionAndRadius	= XMFLOAT4( 100.0f, 0.0f, 0.0f, 350.0f );
 	//light2.ambient				= XMFLOAT4( 2.0f, 8.0f, 6.0f, 1.0f );
 	//light2.diffuse				= XMFLOAT4( 0.85f, 0.85f, 1.0f, 1.0f );
 	//light2.specular				= XMFLOAT4( 1.0f, 1.0f, 1.0f, 1.0f );
@@ -632,16 +801,16 @@ HRESULT Game::Initialize( ID3D11Device* device, ID3D11DeviceContext* deviceConte
 	//mPointLightData.push_back( light2 );
 	////---------------------------------------------------------------------------------------------
 
-	//PointLightData light3;
-	//light3.positionAndRadius = XMFLOAT4( 0.0f, 10.0f, 150.0f, 350.0f );
-	//light3.ambient				= XMFLOAT4( 8.0f, 6.0f, 6.0f, 1.0f );
-	//light3.diffuse				= XMFLOAT4( 0.85f, 0.85f, 1.0f, 1.0f );
-	//light3.specular				= XMFLOAT4( 1.0f, 1.0f, 1.0f, 1.0f );
-	//light3.attenuation			= XMFLOAT3( 0.0f, 0.02f, 0.0f );
+/*	PointLightData light3;
+	light3.positionAndRadius = XMFLOAT4( 0.0f, 10.0f, 150.0f, 350.0f );
+	light3.ambient				= XMFLOAT4( 8.0f, 6.0f, 6.0f, 1.0f );
+	light3.diffuse				= XMFLOAT4( 0.85f, 0.85f, 1.0f, 1.0f );
+	light3.specular				= XMFLOAT4( 1.0f, 1.0f, 1.0f, 1.0f );
+	light3.attenuation			= XMFLOAT3( 0.0f, 0.02f, 0.0f );
 
-	//XMStoreFloat4x4( &light3.world, XMMatrixIdentity() );
+	XMStoreFloat4x4( &light3.world, XMMatrixIdentity() );
 
-	//mPointLightData.push_back( light3 );
+	mPointLightData.push_back( light3 )*/;
 	////============================================================
 
 	if( FAILED( CreateDepthStencilView() ) )
@@ -676,6 +845,11 @@ HRESULT Game::Initialize( ID3D11Device* device, ID3D11DeviceContext* deviceConte
 	if( FAILED( mAssetManager->Initialize( mDevice, mDeviceContext ) ) )
 		return E_FAIL;
 
+	if( FAILED( mShadowMapOmni->Initialize( mDevice, 512 ) ) )
+		return E_FAIL;
+
+
+
 	return S_OK;
 }
 
@@ -690,11 +864,17 @@ Game::Game()
 	mSamplerState				= nullptr;
 
 	mGBuffers					= nullptr;
+	mQuadVertexBuffer			= nullptr;
 
-	mLevel				= nullptr;
-	mCamera				= nullptr;
-	mShaders			= nullptr;
-	mTesselationAmount	= 0.0f;
+	mLightBuffer				= nullptr;
+
+	mShadowMapOmni				= nullptr;
+
+	mLevel						= nullptr;
+	mCamera						= nullptr;
+	mShaders					= nullptr;
+	mAssetManager				= nullptr;
+	mTesselationAmount			= 0.0f;
 }
 
 Game::~Game()
@@ -715,14 +895,17 @@ void Game::Release()
 	}
 	SAFE_DELETE_ARRAY( mGBuffers );
 
+	mShadowMapOmni->Release();
+	SAFE_DELETE( mShadowMapOmni );
+
 	mLevel->Release();
 	SAFE_DELETE( mLevel );
 	SAFE_DELETE( mCamera );
 
-	for (size_t i = 0; i < ShaderType::NUM_SHADERS; i++)
+	/*for (size_t i = 0; i < ShaderType::NUM_SHADERS; i++)
 	{
 		mShaders[i]->Relase();
 		SAFE_DELETE( mShaders[i] );
-	}
+	}*/
 	SAFE_DELETE_ARRAY( mShaders );
 }
